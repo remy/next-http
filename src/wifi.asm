@@ -100,6 +100,73 @@ espSendT:
 	inc hl
 	jr espSendT
 
+; HL = header string
+; Modifies: AF, BC, DE, HL
+; Adds CR LF
+; Then sends pointer at DE
+tcpSendBuffer:
+	ld bc, 64					; FIXME this is hard coded
+	push bc						; BC will be popped when in .sendBody
+
+
+	; push hl : pop de : push de
+	; EspSend "AT+CIPSEND="				; FIXME should this happen later?
+
+	push hl						; strLen will overwrite HL
+	ld d, h
+	ld e, l
+	call strLen
+	inc hl : inc hl ; +CRLF
+
+	;; now add the length of data being sent
+	add hl, bc
+	push hl						; HL = length of sending body
+
+	EspSend "AT+CIPSEND="				; FIXME should this happen later?
+
+	;; FIXME if HL > 2048 then throw an error / or rather loop in 2K chunks
+	pop hl
+	call hlToNumEsp
+	ld a, 13 : call Uart.write
+	ld a, 10 : call Uart.write
+.wait
+	call Uart.read : cp '>' : jr nz, .wait
+	pop hl
+.headerLoop
+	ld a, (hl) : and a : jr z, .sendBody
+	call Uart.write
+	inc hl
+	jp .headerLoop
+
+.sendBody
+	ld hl, buffer					; now send the memory buffer
+	CSP_BREAK
+	pop bc
+	ld a, c						; swap BC around
+	ld c, b
+	ld b, a
+.bodyLoop
+	ld a, (hl)
+
+	push bc
+	call Uart.write
+	pop bc
+
+	inc hl
+	djnz .bodyLoop
+
+	ld a, c						; if C is zero, then exit
+	or a
+	jr z, .exit
+	dec c
+	ld b, $ff
+	jr .bodyLoop
+.exit
+	ld a, 13 : call Uart.write
+	ld a, 10 : call Uart.write
+	jp checkOkErr
+
+
 ; HL - stringZ to send
 ; Adds CR LF
 tcpSendZ:
@@ -155,6 +222,7 @@ getPacket:
 
 	ld a, (skipReply)
 	cp 1
+	CSP_BREAK
 	jr z, .skipbuff
 
 .searchForBlankLine

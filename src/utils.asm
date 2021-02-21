@@ -1,5 +1,6 @@
-; IN DE - string pointer
-; OUT HL - string len
+; DE = pointer to string that's null terminated
+; HL <- string length
+; Modifies: DE
 strLen:
 		ld hl, 0
 .loop

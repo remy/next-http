@@ -67,8 +67,8 @@ read:
     ret
 
 ; Write single byte to UART
-; A - byte to write
-; BC will be wasted
+; A = byte to write
+; Modifies: BC, DE
 write:
     IFDEF WIFI_DEBUG
     push af,, de,, hl

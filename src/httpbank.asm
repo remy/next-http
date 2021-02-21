@@ -33,9 +33,7 @@ start:
 		ld a, (TestData.bank)
 		call Bank.init
 
-		;; TODO if GET then clear the banks
-		call Bank.erase
-
+		;; TODO add timeout for wifi connect (try with ESP removed)
 		call Wifi.init
 		jr c, .error
 
@@ -44,32 +42,69 @@ start:
 		call Wifi.openTCP
 		jr c, .error
 
+.post							; FIXME hard limit on 2048 bytes due to CIPSEND
+		ld a, 1
+		ld (Wifi.skipReply), a
+		ld de, requestBuffer
+		ld hl, TestData.post
+		ld bc, TestData.postLen
+		ldir
+
+		push de
+		ld de, TestData.length
+		call strLen
+		ld b, h
+		ld c, l					; BC now has string length
+		pop de					; DE = responseBuffer (again)
+		ld hl, TestData.length
+		ldir					; POST / ... Content-Length: 64
+
+		ld hl, Strings.emptyLine
+		ld bc, 5
+		ldir					; POST header ready
+
+		ld hl, requestBuffer
+		call Wifi.tcpSendBuffer
+		jr .loadPackets
+
+		; jr .cleanUpAndExit
+
+.get
+		;; if GET then clear the banks and make sure not to skip the content
+		ld a, 0
+		ld (Wifi.skipReply), a
+		call Bank.erase
 		ld hl, TestData.get
 		call Wifi.tcpSendZ
 
 		ld hl, buffer				; store the buffer in the user bank
-		ld (Wifi.buffer_pointer), hl
+		ld (Wifi.bufferPointer), hl
 .loadPackets
 		call Wifi.getPacket
 		ld a, (Wifi.closed)
 		and a
 		jr nz, .cleanUpAndExit
 		jr .loadPackets
+
 .error
 		ld (Err.generic), hl
 		PrintMsg Err.generic
 
 .cleanUpAndExit
+		CSP_BREAK
 		call Bank.restore
 		ld sp, (State.oldStack)
 		ei
 		ret
 
 	MODULE TestData
-host		DB "192.168.1.118", 0
-port		DB "8080", 0
-get		DB "GET /", CR, LF, 0
-bank		DB 20					; 16K Bank 20
+host		DEFB "192.168.1.118", 0
+port		DEFB "8080", 0
+get		DEFB "GET /", CR, LF, 0
+post		DEFB "POST / HTTP/1.1", CR, LF, "Content-Length:"
+postLen		EQU $-post
+length		DEFB "64",0
+bank		DEFB 20					; 16K Bank 20
 	ENDMODULE
 
 	INCLUDE "vars.asm"
@@ -79,47 +114,14 @@ bank		DB 20					; 16K Bank 20
 	INCLUDE "utils.asm"
 	INCLUDE "bank.asm"
 
+requestBuffer	BLOCK 256
 buffer		EQU $C000
 last
 
-diagBinSz   EQU     last-start
-diagBinPcHi EQU     (100*diagBinSz)/8192
-diagBinPcLo EQU     ((100*diagBinSz)%8192)*10/8192
+diagBinSz   	EQU last-start
+diagBinPcHi 	EQU (100*diagBinSz)/8192
+diagBinPcLo 	EQU ((100*diagBinSz)%8192)*10/8192
 
     	DISPLAY "Binary size: ",/D,diagBinSz," (",/D,diagBinPcHi,".",/D,diagBinPcLo,"% of dot command 8kiB)"
 
-	IFNDEF TESTING
-		SAVEBIN "httpbank.dot",start,last-start
-		DISPLAY "prod build"
-	ELSE
-		DISPLAY "test build"
-
-testStart:
-		; ld      a,$C3				; jp **
-		; ld      (ORG_ADDRESS-3),a		; into $8000
-		; ld      hl,testStart			; load $8000 with "jp testStart"
-		; ld      (ORG_ADDRESS-2),hl
-		; ; move the code into 0x2000..3FFF area, faking dot command environment
-		; nextreg MMU1_2000_NR_51, TEST_CODE_PAGE
-		; ; copy the machine code into the area
-		; ld      hl,__bin_b
-		; ld      de,$2000
-		; ld      bc,last-start
-		; ldir
-		; ; setup fake argument and launch loader
-		; ld      hl,testFakeArgumentsLine
-		; CSP_BREAK
-		; call    $2000       ; call to test the quit function
-		; CSP_BREAK
-		; ret
-testFakeArgumentsLine
-		DZ  "Nothing yet ..."
-
-		DEFINE LAUNCH_EMULATOR
-		SAVESNA "httpbank-post.sna",testStart
-
-		IFDEF LAUNCH_EMULATOR : IF 0 == __ERRORS__ && 0 == __WARNINGS__
-			;SHELLEXEC "( sleep 0.1s ; runCSpect -brk testing.sna )"
-        	ENDIF : ENDIF
-
-	ENDIF
+	SAVEBIN "httpbank.dot",start,last-start
