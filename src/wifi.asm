@@ -5,9 +5,11 @@
 ; Includes modifications specific to the httpbank dot command by Remy Sharp
 
     MODULE Wifi
-bytes_avail DW 0
-buffer_pointer DW 0
+bytesAvail DW 0
+bufferPointer DW 0
 closed DB 1
+skipReply DB 0
+
 ; Initialize Wifi chip to work
 init:
 	call Uart.init
@@ -17,8 +19,6 @@ init:
 	EspCmdOkErr "AT+CIPMUX=0" ; Single connection mode
 	jr c, .initError
 
-    	//EspCmdOkErr "AT+CIPDINFO=0" ; Disable additional info
-	jr c, .initError
 	or a
 	ret
 .initError
@@ -137,7 +137,6 @@ getPacket:
 	call Uart.read : cp 'D' : jr nz, getPacket
 	call Uart.read : cp 13 : jr nz, getPacket
 	ld a, 1
-	CSP_BREAK
 	ld (closed), a
 	ret
 .ipdBegun
@@ -145,14 +144,19 @@ getPacket:
 	call Uart.read : cp 'P' : jr nz, getPacket
 	call Uart.read : cp 'D' : jr nz, getPacket
 	call Uart.read ; Comma
-	call .count_ipd_length : ld (bytes_avail), hl
+	call .count_ipd_length : ld (bytesAvail), hl
 
 	;; put the byte count (from the AT response) in DE (to later to be put in BC)
 	ex de, hl
 
 	;; now point HL to the buffer
-	ld hl, (buffer_pointer)
+	ld hl, (bufferPointer)
 	push hl
+
+	ld a, (skipReply)
+	cp 1
+	jr z, .skipbuff
+
 .searchForBlankLine
 	;; since we're reading HTTP responses, the header isn't interesting to
 	;; us so we'll look for \n\r\n\r in a row
@@ -184,7 +188,7 @@ getPacket:
 	ld a, b
 	or c
 	jr nz, .readp
-	ld (buffer_pointer), hl
+	ld (bufferPointer), hl
 	ret
 .skipbuff
 	push bc
@@ -194,7 +198,8 @@ getPacket:
 	ret
 .count_ipd_length
 	ld hl,0			; count length
-.cil1	push  hl
+.cil1
+	push  hl
         call Uart.read
         pop hl
 	cp ':' : ret z

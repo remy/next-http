@@ -1,4 +1,4 @@
-# httpbank
+# httpbank (WIP)
 
 Intended usage:
 
@@ -29,3 +29,8 @@ Thoughts on missing tasks:
 - Run at full speed
 - Sync uart or adjust it
 - Restore speeds, etc
+
+## Development
+
+- Uses sjasmplus from VS Code task
+- Follows this [code convention](https://github.com/remy/z80-code-conventions)

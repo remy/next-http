@@ -7,15 +7,15 @@
       "label": "sjasmplus",
       "type": "shell",
       "options": {
-        "cwd": "${fileDirname}"
+        "cwd": "${workspaceFolder}"
       },
       "command": "sjasmplus",
       "args": [
-        "--sld=${fileDirname}/httpbank.sld",
+        "--sld=${workspaceFolder}/src/httpbank.sld",
         "--nologo",
         "--fullpath",
-        "httpbank.asm",
-        "--sym=${fileDirname}/httpbank.labels"
+        "${workspaceFolder}/src/httpbank.asm",
+        "--sym=${workspaceFolder}/src/httpbank.labels"
       ],
       "presentation": {
         "echo": true,
