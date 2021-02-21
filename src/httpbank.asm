@@ -65,9 +65,8 @@ start:
 
 		ld hl, requestBuffer
 		call Wifi.tcpSendBuffer
-		jr .loadPackets
 
-		; jr .cleanUpAndExit
+		jr .loadPackets				; ensure we drain the ESP
 
 .get
 		;; if GET then clear the banks and make sure not to skip the content
@@ -101,7 +100,7 @@ start:
 host		DEFB "192.168.1.118", 0
 port		DEFB "8080", 0
 get		DEFB "GET /", CR, LF, 0
-post		DEFB "POST / HTTP/1.1", CR, LF, "Content-Length:"
+post		DEFB "POST / HTTP/1.1", CR, LF, "Connection: close", CR, LF, "Content-Length:"
 postLen		EQU $-post
 length		DEFB "64",0
 bank		DEFB 20					; 16K Bank 20

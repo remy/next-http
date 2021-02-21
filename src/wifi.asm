@@ -108,10 +108,6 @@ tcpSendBuffer:
 	ld bc, 64					; FIXME this is hard coded
 	push bc						; BC will be popped when in .sendBody
 
-
-	; push hl : pop de : push de
-	; EspSend "AT+CIPSEND="				; FIXME should this happen later?
-
 	push hl						; strLen will overwrite HL
 	ld d, h
 	ld e, l
@@ -120,11 +116,13 @@ tcpSendBuffer:
 
 	;; now add the length of data being sent
 	add hl, bc
-	push hl						; HL = length of sending body
-
-	EspSend "AT+CIPSEND="				; FIXME should this happen later?
 
 	;; FIXME if HL > 2048 then throw an error / or rather loop in 2K chunks
+
+	push hl						; HL = length of sending body
+
+	EspSend "AT+CIPSEND="
+
 	pop hl
 	call hlToNumEsp
 	ld a, 13 : call Uart.write
@@ -140,11 +138,7 @@ tcpSendBuffer:
 
 .sendBody
 	ld hl, buffer					; now send the memory buffer
-	CSP_BREAK
 	pop bc
-	ld a, c						; swap BC around
-	ld c, b
-	ld b, a
 .bodyLoop
 	ld a, (hl)
 
@@ -153,14 +147,9 @@ tcpSendBuffer:
 	pop bc
 
 	inc hl
-	djnz .bodyLoop
 
-	ld a, c						; if C is zero, then exit
-	or a
-	jr z, .exit
-	dec c
-	ld b, $ff
-	jr .bodyLoop
+	dec bc : ld a, b : or c : jr nz, .bodyLoop
+
 .exit
 	ld a, 13 : call Uart.write
 	ld a, 10 : call Uart.write
@@ -213,17 +202,16 @@ getPacket:
 	call Uart.read ; Comma
 	call .count_ipd_length : ld (bytesAvail), hl
 
+	ld a, (skipReply)
+	cp 1
+	jr z, .slurp
+
 	;; put the byte count (from the AT response) in DE (to later to be put in BC)
 	ex de, hl
 
 	;; now point HL to the buffer
 	ld hl, (bufferPointer)
 	push hl
-
-	ld a, (skipReply)
-	cp 1
-	CSP_BREAK
-	jr z, .skipbuff
 
 .searchForBlankLine
 	;; since we're reading HTTP responses, the header isn't interesting to
@@ -247,15 +235,11 @@ getPacket:
 	pop hl
 	pop bc
 
-	;; keep reading until we get a sequence of CR, LF, CR, LF
-	dec bc
-
 	ld (hl), a
 	inc hl
 
-	ld a, b
-	or c
-	jr nz, .readp
+	dec bc : ld a, b : or c : jr nz, .readp
+
 	ld (bufferPointer), hl
 	ret
 .skipbuff
@@ -264,6 +248,15 @@ getPacket:
 	pop bc
 	dec bc : ld a, b : or c : jr nz, .skipbuff
 	ret
+
+.slurp
+	;; HL contains the length of bytes from ESP
+	ld b, h
+	ld c, l
+	CSP_BREAK
+	jr .skipbuff
+
+
 .count_ipd_length
 	ld hl,0			; count length
 .cil1
