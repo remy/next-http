@@ -4,7 +4,14 @@ prevBankA	DEFB 0
 prevBankB	DEFB 0
 userBank	DEFB 0
 
+pageA		EQU MMU4_8000_NR_54
+pageB		EQU MMU5_A000_NR_55
 
+                                        ; NOTE: MMU3/5 are safe from being
+                                        ;       paged out when making NextZXOS
+                                        ;       calls (unlike MMU0/1/6/7)
+
+buffer		EQU $8000
 
 ; A <- 16K bank number to use as active bank
 ; Modifies: A, BC (via macro)
@@ -16,16 +23,16 @@ init:
 		;; backup the banks that are sitting over $C000 and $E000
 		;; note that with a dot file, the stack originally is sitting at $FF42
 		;; so do use this area, I need to set my own stackTop (see vars.asm)
-		NextRegRead MMU6_C000_NR_56
+		NextRegRead pageA
 		ld (prevBankA), a
-		NextRegRead MMU7_E000_NR_57
+		NextRegRead pageB
 		ld (prevBankB), a
 
 		;; now page in our user banks
 		ld a, (userBank)
-		nextreg	MMU6_C000_NR_56, a ; set bank to A
+		nextreg	pageA, a ; set bank to A
 		inc a
-		nextreg	MMU7_E000_NR_57, a ; set bank to A
+		nextreg	pageB, a ; set bank to A
 		ret
 
 erase:
@@ -38,9 +45,9 @@ erase:
 
 restore:
 		ld a, (prevBankA)
-		nextreg	MMU6_C000_NR_56, a
+		nextreg	pageA, a
 		ld a, (prevBankB)
-		nextreg	MMU7_E000_NR_57, a
+		nextreg	pageB, a
 		ret
 
 	ENDMODULE

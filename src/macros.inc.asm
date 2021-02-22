@@ -1,5 +1,10 @@
-CSP_BREAK MACRO : break : ENDM
-; CSP_BREAK MACRO : IFDEF TESTING : break : ENDIF : ENDM
+; CSP_BREAK MACRO : break : ENDM
+CSP_BREAK MACRO : IFDEF TESTING : break : ENDIF : ENDM
+
+PrintChar MACRO
+        	rst $10
+	ENDM
+
 
 PrintMsg MACRO Address
 		ld 	hl, Address

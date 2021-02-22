@@ -3,35 +3,47 @@
 	OPT reset --zxnext --syntax=abfw
 	OPT --zxnext=cspect
 
+	INCLUDE "version.inc.asm"
 	INCLUDE "macros.inc.asm"
 	INCLUDE "constants.inc.asm"
 
-	; DEFINE TESTING
-	DEFINE DISP_ADDRESS     $2000
-
-	IFNDEF TESTING
-		DEFINE ORG_ADDRESS      $2000
-	ELSE
-		OPT --zxnext=cspect
-		DEFINE ORG_ADDRESS      $8003
-		DEFINE TEST_CODE_PAGE   95         ; using the last page of 1MiB RAM (in emulator)
-	ENDIF
+	DEFINE ORG_ADDRESS      $2000
 
 	ORG ORG_ADDRESS
-__bin_b DISP    DISP_ADDRESS
+
+		;; Dot commands always start at $2000, with HL=address of command tail
+		;; (terminated by $00, $0d or ':').
+
 start:
 		jr .init
-		DB " HTTPBANK by Remy Sharp "		; meh, just because I can :)
+		DB NAME, " v", VERSION 			; meh, just because I can :)
 .init:
 		di
-		ld (State.oldStack), sp			; set my own stack so I can use $e000-$ffff
-		ld sp, State.stackTop
+		CSP_BREAK
+		ld (Exit.stack), sp			; set my own stack so I can use $e000-$ffff
+		;ld sp, State.stackTop
+
+		;; set cpu speed to 28mhz
+		NextRegRead CPUSpeed       		; Read CPU speed
+		and %11                         	; Mask out everything but the current desired speed
+		ld (Exit.cpu), a	             	; Save current speed so it can be restored on exit
+		nextreg CPUSpeed, %11       		; Set current desired speed to 28MHz
 
 		;; TODO parse the command line arguments
+		;; TODO [ ] test from command line
+		;; TODO [ ] test from NextBASIC
+		;; TODO [ ] test from NextBASIC using .$ call
+		; ld hl, TestData.cmd
+		call Parse.start
 
 		;; page in our bank
-		ld a, (TestData.bank)
+		ld de, TestData.bank
+		call StringToNumber16
+		ld a, l					; expecting HL to be < 144 (total number of banks in 2mb)
 		call Bank.init
+
+		;; FIXME remove
+		jr Exit
 
 		;; TODO add timeout for wifi connect (try with ESP removed)
 		call Wifi.init
@@ -52,9 +64,8 @@ start:
 
 		push de
 		ld de, TestData.length
-		call strLen
-		ld b, h
-		ld c, l					; BC now has string length
+		call StringLength
+		ld b, h : ld c, l			; BC = HL (BC = string length of "length" value)
 		pop de					; DE = responseBuffer (again)
 		ld hl, TestData.length
 		ldir					; POST / ... Content-Length: 64
@@ -63,6 +74,9 @@ start:
 		ld bc, 5
 		ldir					; POST header ready
 
+		ld de, TestData.length
+		call StringToNumber16
+		ld b, h : ld c, l			; BC = HL
 		ld hl, requestBuffer
 		call Wifi.tcpSendBuffer
 
@@ -76,23 +90,27 @@ start:
 		ld hl, TestData.get
 		call Wifi.tcpSendZ
 
-		ld hl, buffer				; store the buffer in the user bank
+		ld hl, Bank.buffer			; store the buffer in the user bank
 		ld (Wifi.bufferPointer), hl
 .loadPackets
 		call Wifi.getPacket
 		ld a, (Wifi.closed)
 		and a
-		jr nz, .cleanUpAndExit
+		jr nz, Exit
 		jr .loadPackets
 
 .error
 		ld (Err.generic), hl
 		PrintMsg Err.generic
 
-.cleanUpAndExit
-		CSP_BREAK
+Exit
 		call Bank.restore
-		ld sp, (State.oldStack)
+.nop
+.stack equ $+1
+		ld sp, SMC
+.cpu equ $+3:
+		nextreg CPUSpeed, SMC       		; Restore original CPU speed
+		and a					; Fc=0, successful
 		ei
 		ret
 
@@ -103,7 +121,8 @@ get		DEFB "GET /", CR, LF, 0
 post		DEFB "POST / HTTP/1.1", CR, LF, "Connection: close", CR, LF, "Content-Length:"
 postLen		EQU $-post
 length		DEFB "64",0
-bank		DEFB 20					; 16K Bank 20
+bank		DEFB "20"				; 16K Bank 20
+cmd		DEFB "get -h 192.168.1.118 -p 8080 -u / -b 22", 0
 	ENDMODULE
 
 	INCLUDE "vars.asm"
@@ -112,9 +131,9 @@ bank		DEFB 20					; 16K Bank 20
 	INCLUDE "wifi.asm"
 	INCLUDE "utils.asm"
 	INCLUDE "bank.asm"
+	INCLUDE "parse.asm"
 
 requestBuffer	BLOCK 256
-buffer		EQU $C000
 last
 
 diagBinSz   	EQU last-start

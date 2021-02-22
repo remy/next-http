@@ -101,17 +101,17 @@ espSendT:
 	jr espSendT
 
 ; HL = header string
+; BC = length of data to send
 ; Modifies: AF, BC, DE, HL
 ; Adds CR LF
 ; Then sends pointer at DE
 tcpSendBuffer:
-	ld bc, 64					; FIXME this is hard coded
 	push bc						; BC will be popped when in .sendBody
 
 	push hl						; strLen will overwrite HL
 	ld d, h
 	ld e, l
-	call strLen
+	call StringLength
 	inc hl : inc hl ; +CRLF
 
 	;; now add the length of data being sent
@@ -137,7 +137,7 @@ tcpSendBuffer:
 	jp .headerLoop
 
 .sendBody
-	ld hl, buffer					; now send the memory buffer
+	ld hl, Bank.buffer					; now send the memory buffer
 	pop bc
 .bodyLoop
 	ld a, (hl)
@@ -162,7 +162,7 @@ tcpSendZ:
 	push hl
 	EspSend "AT+CIPSEND="
 	pop de : push de
-	call strLen
+	call StringLength
 	inc hl : inc hl ; +CRLF
 	call hlToNumEsp
 	ld a, 13 : call Uart.write
@@ -225,7 +225,7 @@ getPacket:
 	pop bc
 .readp
 	ld a, h
-	cp HIGH buffer
+	cp HIGH Bank.buffer
 	jr c, .skipbuff
 
 	;; read UART into A

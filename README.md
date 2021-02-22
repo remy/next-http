@@ -3,16 +3,18 @@
 Intended usage:
 
 ```
-.httpbank -b 22 -o 0 -l 1024 -s 127.0.0.1 -p 8080
+.httpbank post -b 22 -l 1024 -h 127.0.0.1 -p 8080 -u /send
+.httpbank get -b 26 -h example.com -u /receive
 ```
 
 Options:
 
 - `-b` bank number in 16K blocks
-- `-o` address offset
 - `-l` length of bytes to send
-- `-s` host address
-- `-p` port number
+- `-o` address offset (defaults to 0)
+- `-h` host address
+- `-p` port number (defaults to 80)
+- `-u` url (defaults to `/`)
 - `-h` shows help
 
 ## Process
