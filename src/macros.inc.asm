@@ -1,5 +1,5 @@
-; CSP_BREAK MACRO : break : ENDM
-CSP_BREAK MACRO : IFDEF TESTING : break : ENDIF : ENDM
+CSP_BREAK MACRO : break : ENDM
+; CSP_BREAK MACRO : IFDEF TESTING : break : ENDIF : ENDM
 
 PrintChar MACRO
         	rst $10
@@ -9,6 +9,19 @@ PrintChar MACRO
 PrintMsg MACRO Address
 		ld 	hl, Address
 		call 	PrintRst16
+	ENDM
+
+PrintText MACRO Text
+		push 	hl
+		ld 	hl, .txt
+		call 	PrintRst16
+		pop	hl
+		jr 	.txtE
+.txt
+		DB Text
+		DB CR
+		DB 0
+.txtE
 	ENDM
 
 

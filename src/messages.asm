@@ -1,5 +1,6 @@
 	MODULE Err
 openTCP		DB "TCP open failed", 0
+badOption	DC "Unknown option"
 generic		DB 0
 
 	ENDMODULE

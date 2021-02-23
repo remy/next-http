@@ -253,7 +253,6 @@ getPacket:
 	;; HL contains the length of bytes from ESP
 	ld b, h
 	ld c, l
-	CSP_BREAK
 	jr .skipbuff
 
 

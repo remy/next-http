@@ -12,14 +12,12 @@
 	ORG ORG_ADDRESS
 
 		;; Dot commands always start at $2000, with HL=address of command tail
-		;; (terminated by $00, $0d or ':').
 
 start:
 		jr .init
 		DB NAME, " v", VERSION 			; meh, just because I can :)
 .init:
 		di
-		CSP_BREAK
 		ld (Exit.stack), sp			; set my own stack so I can use $e000-$ffff
 		;ld sp, State.stackTop
 
@@ -37,44 +35,49 @@ start:
 		call Parse.start
 
 		;; page in our bank
-		ld de, TestData.bank
+		ld de, State.bank
 		call StringToNumber16
 		ld a, l					; expecting HL to be < 144 (total number of banks in 2mb)
 		call Bank.init
 
 		;; FIXME remove
-		jr Exit
+		; jr Exit
 
 		;; TODO add timeout for wifi connect (try with ESP removed)
 		call Wifi.init
 		jr c, .error
 
-		ld hl, TestData.host
-		ld de, TestData.port
+		ld hl, State.host
+		ld de, State.port
 		call Wifi.openTCP
 		jr c, .error
 
+		;; if type = 0 => get, = 1 => post, else ¯\_(ツ)_/¯
+		ld a, (State.type)
+		and a : jr z, .get
+		cp 1 : jr z, .post
+		call Parse.showHelp
+
 .post							; FIXME hard limit on 2048 bytes due to CIPSEND
-		ld a, 1
 		ld (Wifi.skipReply), a
 		ld de, requestBuffer
-		ld hl, TestData.post
-		ld bc, TestData.postLen
+		ld hl, Strings.post
+		ld bc, Strings.postLen
 		ldir
 
 		push de
-		ld de, TestData.length
+		ld de, State.length
 		call StringLength
 		ld b, h : ld c, l			; BC = HL (BC = string length of "length" value)
 		pop de					; DE = responseBuffer (again)
-		ld hl, TestData.length
+		ld hl, State.length
 		ldir					; POST / ... Content-Length: 64
 
 		ld hl, Strings.emptyLine
 		ld bc, 5
 		ldir					; POST header ready
 
-		ld de, TestData.length
+		ld de, State.length
 		call StringToNumber16
 		ld b, h : ld c, l			; BC = HL
 		ld hl, requestBuffer
@@ -84,10 +87,9 @@ start:
 
 .get
 		;; if GET then clear the banks and make sure not to skip the content
-		ld a, 0
 		ld (Wifi.skipReply), a
 		call Bank.erase
-		ld hl, TestData.get
+		ld hl, Strings.get
 		call Wifi.tcpSendZ
 
 		ld hl, Bank.buffer			; store the buffer in the user bank
@@ -105,25 +107,15 @@ start:
 
 Exit
 		call Bank.restore
+		and a					; Fc=0, successful
 .nop
 .stack equ $+1
 		ld sp, SMC
 .cpu equ $+3:
 		nextreg CPUSpeed, SMC       		; Restore original CPU speed
-		and a					; Fc=0, successful
+		CSP_BREAK
 		ei
 		ret
-
-	MODULE TestData
-host		DEFB "192.168.1.118", 0
-port		DEFB "8080", 0
-get		DEFB "GET /", CR, LF, 0
-post		DEFB "POST / HTTP/1.1", CR, LF, "Connection: close", CR, LF, "Content-Length:"
-postLen		EQU $-post
-length		DEFB "64",0
-bank		DEFB "20"				; 16K Bank 20
-cmd		DEFB "get -h 192.168.1.118 -p 8080 -u / -b 22", 0
-	ENDMODULE
 
 	INCLUDE "vars.asm"
 	INCLUDE "messages.asm"
@@ -132,6 +124,7 @@ cmd		DEFB "get -h 192.168.1.118 -p 8080 -u / -b 22", 0
 	INCLUDE "utils.asm"
 	INCLUDE "bank.asm"
 	INCLUDE "parse.asm"
+	INCLUDE "strings.asm"
 
 requestBuffer	BLOCK 256
 last
