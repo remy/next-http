@@ -25,12 +25,12 @@ Run with no arguments to see the help.
 ## Todo
 
 - [ ] Timeout on esp comms
-- [ ] Check POST or GET for > 512 bytes
 - [ ] Support offset
 - [ ] Thorough check of argument processing
-- [ ] Test calling from NextBASIC
 - [ ] Potentially reset esp if failing to respond (AT+RST)
 - [ ] Support NextBASIC variables in the args, i.e. `-b a$`
+- [x] Test calling from NextBASIC (with trailing comment)
+- [x] Check POST or GET for > 512 bytes
 
 ## How it works
 
