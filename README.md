@@ -31,6 +31,7 @@ Run with no arguments to see the help.
 - [ ] Thorough check of argument processing
 - [ ] Test calling from NextBASIC
 - [ ] Potentially reset esp if failing to respond (AT+RST)
+- [ ] Support NextBASIC variables in the args, i.e. `-b a$`
 
 ## How it works
 

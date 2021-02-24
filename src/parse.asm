@@ -10,17 +10,14 @@ showHelp:
 doGet:
 		ld a, State.GET
 		ld (State.type), a
-		PrintText "Do GET"
 		jr startToken
 
 doPost:
 		ld a, State.POST
 		ld (State.type), a
-		PrintText "Do POST"
 		jr Parse.startToken
 
 parseError:
-		PrintText "Bad option"
 		pop af
 		ld hl, Err.badOption
 		xor a					; set A = 0

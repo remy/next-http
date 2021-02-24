@@ -9,6 +9,7 @@ bytesAvail DW 0
 bufferPointer DW 0
 closed DB 1
 skipReply DB 0
+firstRead DB 1
 
 ; Initialize Wifi chip to work
 init:
@@ -213,6 +214,9 @@ getPacket:
 	ld hl, (bufferPointer)
 	push hl
 
+	ld a, (firstRead)
+	and a : jr z, .headerProcessed
+
 .searchForBlankLine
 	;; since we're reading HTTP responses, the header isn't interesting to
 	;; us so we'll look for \n\r\n\r in a row
@@ -220,6 +224,10 @@ getPacket:
 	call Uart.read : dec de ; LR
 	call Uart.read : dec de : cp CR : jr nz, .searchForBlankLine
 	call Uart.read : dec de ; LR
+
+	ld a, 0
+	ld (firstRead), a
+.headerProcessed
 	pop hl
 	push de
 	pop bc
@@ -239,7 +247,6 @@ getPacket:
 	inc hl
 
 	dec bc : ld a, b : or c : jr nz, .readp
-
 	ld (bufferPointer), hl
 	ret
 .skipbuff

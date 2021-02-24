@@ -1,12 +1,12 @@
 	DEVICE ZXSPECTRUM48
 	SLDOPT COMMENT WPMEM, LOGPOINT, ASSERTION
-	OPT reset --zxnext --syntax=abfw
+	OPT reset --zxnext --syntax=abfw --zxnext=cspect
 
 	INCLUDE "version.inc.asm"
 	INCLUDE "macros.inc.asm"
 	INCLUDE "constants.inc.asm"
 
-	DEFINE TESTING
+	; DEFINE TESTING
 
 	DEFINE DISP_ADDRESS     $2000
 
@@ -24,6 +24,7 @@
 start:
 		jr .init
 		DB NAME, " v", VERSION 			; meh, just because I can :)
+
 .init:
 		di
 		ld (Exit.stack), sp			; set my own stack so I can use $e000-$ffff
@@ -39,7 +40,7 @@ start:
 		;; TODO [ ] test from command line
 		;; TODO [ ] test from NextBASIC
 		;; TODO [ ] test from NextBASIC using .$ call
-		; ld hl, TestData.cmd
+		; ld hl, .testFakeArgumentsLine
 		call Parse.start
 
 		;; page in our bank
@@ -53,20 +54,20 @@ start:
 
 		;; TODO add timeout for wifi connect (try with ESP removed)
 		call Wifi.init
-		jr c, .error
+		jp c, Error
 
 		ld hl, State.host
 		ld de, State.port
 		call Wifi.openTCP
-		jr c, .error
+		jp c, Error
 
 		;; if type = 0 => get, = 1 => post, else ¯\_(ツ)_/¯
 		ld a, (State.type)
-		and a : jr z, .get
-		cp 1 : jr z, .post
+		and a : jr z, Get
+		cp 1 : jr z, Post
 		call Parse.showHelp
 
-.post							; FIXME hard limit on 2048 bytes due to CIPSEND
+Post							; FIXME hard limit on 2048 bytes due to CIPSEND
 		ld (Wifi.skipReply), a
 		ld de, requestBuffer
 		ld hl, Strings.post
@@ -91,26 +92,45 @@ start:
 		ld hl, requestBuffer
 		call Wifi.tcpSendBuffer
 
-		jr .loadPackets				; ensure we drain the ESP
+		jr LoadPackets				; ensure we drain the ESP
 
-.get
+Get
 		;; if GET then clear the banks and make sure not to skip the content
 		ld (Wifi.skipReply), a
 		call Bank.erase
+		ld de, requestBuffer
 		ld hl, Strings.get
+		ld bc, 4
+		ldir					; "GET "
+		ld hl, State.url
+.loop
+		ld a, (hl)
+		and a : jr z, .done
+		ld (de), a
+		inc hl
+		inc de
+		jr .loop
+.done
+		ld hl, Strings.newLine
+		ld bc, 3
+		ldir
+		ld hl, requestBuffer
+
+		CSP_BREAK
+
 		call Wifi.tcpSendZ
 
 		ld hl, Bank.buffer			; store the buffer in the user bank
 		ld (Wifi.bufferPointer), hl
-.loadPackets
+LoadPackets
 		call Wifi.getPacket
 		ld a, (Wifi.closed)
 		and a
 		jr nz, Exit
-		jr .loadPackets
+		jr LoadPackets
 
 ; HL = pointer to error string
-.error
+Error
 		xor a					; set A = 0
 		scf					; Exit Fc=1
 
@@ -154,7 +174,7 @@ testStart:
 		ld      hl,testFakeArgumentsLine
 		call 	start
 		ret
-testFakeArgumentsLine   DZ  "post -h 192.168.1.118 -p 8080 -b 30 -l 200"
+testFakeArgumentsLine   DZ  "post -h httpbank.remysharp.com -u /picture.scr -b 31"
 
 		SAVESNA "httpbank.sna",testStart
 	ENDIF
