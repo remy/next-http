@@ -1,0 +1,67 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "dezog",
+      "request": "launch",
+      "name": "Internal",
+      "remoteType": "zsim",
+      "zsim": {
+        "loadZxRom": true,
+        "zxKeyboard": true,
+        "ulaScreen": true,
+        "visualMemory": true,
+        "vsyncInterrupt": true,
+        "memoryModel": "ZX48K",
+        "Z80N": true
+      },
+      "rootFolder": "${workspceFolder}",
+      "tmpDir": "${fileDirname}",
+      // "tmpDir": "${workspceFolder}",
+      "sjasmplus": [
+        {
+          "path": "${workspaceFolder}/src/httpbank.sld",
+          "useFiles": true,
+          "asm": "sjasmplus",
+          "mainFile": "httpbank.asm"
+        }
+      ],
+      "disassemblerArgs": {
+        "esxdosRst": true
+      },
+      "commandsAfterLaunch": ["-assertion enable"],
+      "load": "${workspaceFolder}/httpbank.sna",
+      "startAutomatically": false,
+      "preLaunchTask": "sjasmplus"
+    },
+    {
+      "type": "dezog",
+      "request": "launch",
+      "name": "Cspect",
+      "remoteType": "cspect",
+      "cspect": {
+        "port": 11000
+      },
+      "rootFolder": "${workspceFolder}",
+      "tmpDir": "${workspceFolder}",
+      "sjasmplus": [
+        {
+          "path": "${workspaceFolder}/src/httpbank.sld",
+          "useFiles": true,
+          "asm": "sjasmplus",
+          "mainFile": "httpbank.asm"
+        }
+      ],
+      "disassemblerArgs": {
+        "esxdosRst": true
+      },
+      "commandsAfterLaunch": ["-assertion enable"],
+      "load": "${workspaceFolder}/httpbank.sna",
+      "startAutomatically": false,
+      "preLaunchTask": "sjasmplus"
+    }
+  ]
+}

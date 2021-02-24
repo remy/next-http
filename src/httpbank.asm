@@ -1,18 +1,26 @@
-	DEVICE ZXSPECTRUMNEXT
+	DEVICE ZXSPECTRUM48
 	SLDOPT COMMENT WPMEM, LOGPOINT, ASSERTION
 	OPT reset --zxnext --syntax=abfw
-	OPT --zxnext=cspect
 
 	INCLUDE "version.inc.asm"
 	INCLUDE "macros.inc.asm"
 	INCLUDE "constants.inc.asm"
 
-	DEFINE ORG_ADDRESS      $2000
+	DEFINE TESTING
 
-	ORG ORG_ADDRESS
+	DEFINE DISP_ADDRESS     $2000
+
+	IFNDEF TESTING
+		DEFINE ORG_ADDRESS      $2000
+	ELSE
+		OPT --zxnext=cspect
+		DEFINE ORG_ADDRESS      $8003
+		DEFINE TEST_CODE_PAGE   223         ; using the last page of 2MiB RAM (in emulator)
+	ENDIF
 
 		;; Dot commands always start at $2000, with HL=address of command tail
-
+	ORG 	ORG_ADDRESS
+; __bin_b DISP    DISP_ADDRESS
 start:
 		jr .init
 		DB NAME, " v", VERSION 			; meh, just because I can :)
@@ -101,19 +109,19 @@ start:
 		jr nz, Exit
 		jr .loadPackets
 
+; HL = pointer to error string
 .error
-		ld (Err.generic), hl
-		PrintMsg Err.generic
+		xor a					; set A = 0
+		scf					; Exit Fc=1
 
 Exit
+		;; for a clean exit, the carry flag needs to be clear (and a)
 		call Bank.restore
-		and a					; Fc=0, successful
 .nop
 .stack equ $+1
-		ld sp, SMC
+		ld sp, SMC				; the original stack pointer is set here upon load
 .cpu equ $+3:
 		nextreg CPUSpeed, SMC       		; Restore original CPU speed
-		CSP_BREAK
 		ei
 		ret
 
@@ -126,7 +134,7 @@ Exit
 	INCLUDE "parse.asm"
 	INCLUDE "strings.asm"
 
-requestBuffer	BLOCK 256
+requestBuffer	BLOCK 256				; Reqest buffer is only used for the POST headers, not the body
 last
 
 diagBinSz   	EQU last-start
@@ -135,4 +143,18 @@ diagBinPcLo 	EQU ((100*diagBinSz)%8192)*10/8192
 
     	DISPLAY "Binary size: ",/D,diagBinSz," (",/D,diagBinPcHi,".",/D,diagBinPcLo,"% of dot command 8kiB)"
 
-	SAVEBIN "httpbank.dot",start,last-start
+	IFNDEF TESTING
+		SAVEBIN "httpbank.dot",start,last-start
+		DISPLAY "prod build"
+	ELSE
+		DISPLAY "test build"
+
+testStart:
+		; setup fake argument and launch loader
+		ld      hl,testFakeArgumentsLine
+		call 	start
+		ret
+testFakeArgumentsLine   DZ  "post -h 192.168.1.118 -p 8080 -b 30 -l 200"
+
+		SAVESNA "httpbank.sna",testStart
+	ENDIF

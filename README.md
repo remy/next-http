@@ -15,9 +15,24 @@ Options:
 - `-h` host address
 - `-p` port number (defaults to 80)
 - `-u` url (defaults to `/`)
-- `-h` shows help
 
-## Process
+Run with no arguments to see the help.
+
+## Limits
+
+-
+
+
+## Todo
+
+- [ ] Timeout on esp comms
+- [ ] Check POST or GET for > 512 bytes
+- [ ] Support offset
+- [ ] Thorough check of argument processing
+- [ ] Test calling from NextBASIC
+- [ ] Potentially reset esp if failing to respond (AT+RST)
+
+## How it works
 
 1. Checks commands and allocates defaults or exits with errors
 2. Connects to network address and port
@@ -28,11 +43,15 @@ Options:
 
 Thoughts on missing tasks:
 
-- Run at full speed
-- Sync uart or adjust it
-- Restore speeds, etc
+- ~~Run at full speed~~
+- ~~Sync uart or adjust it~~
+- ~~Restore speeds, etc~~
 
 ## Development
 
 - Uses sjasmplus from VS Code task
 - Follows this [code convention](https://github.com/remy/z80-code-conventions)
+
+## License
+
+- [MIT](https://rem.mit-license.org/)

@@ -44,10 +44,12 @@ erase:
 		ret
 
 restore:
+		push af
 		ld a, (prevBankA)
 		nextreg	pageA, a
 		ld a, (prevBankB)
 		nextreg	pageB, a
+		pop af
 		ret
 
 	ENDMODULE

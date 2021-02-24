@@ -31,9 +31,8 @@ parseError:
 ; HL = start of arguments
 ; Modifies: A, HL
 start:
-		CSP_BREAK
 		ld a, h : or l				; check if HL is zero
-		jr z, Parse.showHelp				; if no args, show help
+		jr z, Parse.showHelp			; if no args, show help
 
 startToken
 		ld a, (hl)
