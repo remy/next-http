@@ -1,6 +1,11 @@
 ; CSP_BREAK MACRO : break : ENDM
 CSP_BREAK MACRO : IFDEF TESTING : break : ENDIF : ENDM
 
+call48k MACRO address
+        	rst     $18
+        	DEFW    address
+	ENDM
+
 PrintChar MACRO
         	rst $10
 	ENDM

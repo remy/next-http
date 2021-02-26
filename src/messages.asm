@@ -1,13 +1,11 @@
 	MODULE Err
-openTCP		DB "TCP open failed", 0
+openTCP		DC "TCP open failed"
 badOption	DC "Unknown option"
-generic		DB 0
+varNotFound	DC "NextBASIC string variable not found"
 
 	ENDMODULE
 
 	MODULE Msg
-
-success:	DB "Success", 0
 
 help
 		;;  12345678901234567890123456789012
@@ -21,8 +19,8 @@ help
 		DB "-h str    host address",CR
 		DB "-p num*   port (default 80)",CR
 		DB "-u str*   url (default /)",CR, CR
-		DB "Post only:",CR
-		DB "-l num    length of data",CR
+		DB "-l num*   length of data",CR
+		DB "          (required with POST)",CR
 		DB "-o num*   offset in bank",CR
 		DB "          (default 0)",CR, CR
 		DB "* denotes optional with defaults",CR

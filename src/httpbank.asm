@@ -116,8 +116,6 @@ Get
 		ldir
 		ld hl, requestBuffer
 
-		CSP_BREAK
-
 		call Wifi.tcpSendZ
 
 		ld hl, Bank.buffer			; store the buffer in the user bank

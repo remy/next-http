@@ -1,8 +1,10 @@
 #autoline 10
 
+h$="next.marbles2.com"
+b$="30"
 LOAD "httpbank.bas.txt" BANK 30
 PRINT "posting"
-../httpbank.dot post -h next.marbles2.com -b 30 -l 20
+../httpbank.dot post -b b$ -h h$ -l 20
 PRINT "done, now getting"
 ../httpbank.dot get -h next.marbles2.com -b 31 : ; $3E
 PRINT "complete, reading"

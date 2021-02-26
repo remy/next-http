@@ -14,3 +14,7 @@ MMU6_C000_NR_56                 equ $56     ;Set a Spectrum RAM page at position
 MMU7_E000_NR_57                 equ $57     ;Set a Spectrum RAM page at position 0xE000 to 0xFFFF
 
 CPUSpeed              		equ $07
+
+; System variables
+VARS                    	EQU $5c4b	; addr of variables area
+NEXT_ONE_r3             	EQU $19b8           ; find next variable
