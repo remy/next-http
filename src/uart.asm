@@ -52,35 +52,32 @@ init:
     dw 243,248,256,260,269,278,286,234
 
 read:
-    ld bc, UART_GetStatus
+		call InitESPTimeout
+		ld bc, UART_GetStatus
 .wait
-    in a, (c)
-    rrca : jr nc, .wait
-    ld bc, UART_RxD
-    in a, (c)
-
-    IFDEF WIFI_DEBUG
-    push af,, de,, hl
-    call TextMode.putC
-    pop hl,, de,, af
-    ENDIF
-    ret
+		in a, (c)
+		rrca : jr nc, .checkTimeout
+		ld bc, UART_RxD
+		in a, (c)
+		ret
+.checkTimeout
+		call CheckESPTimeout
+		jr .wait
 
 ; Write single byte to UART
 ; A = byte to write
 ; Modifies: BC, DE
 write:
-    IFDEF WIFI_DEBUG
-    push af,, de,, hl
-    call TextMode.putC
-    pop hl,, de,, af
-    ENDIF
-
-    ld d, a
-    ld bc, UART_GetStatus
+		call InitESPTimeout
+		ld d, a
+		ld bc, UART_GetStatus
 .wait
-    in a, (c) : and UART_TX_BUSY : jr nz, .wait
-    out (c), d
-    ret
+		in a, (c) : and UART_TX_BUSY : jr nz, .checkTimeout
+		out (c), d
+		ret
+
+.checkTimeout
+		call CheckESPTimeout
+		jr .wait
 
     ENDMODULE

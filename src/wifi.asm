@@ -118,8 +118,6 @@ tcpSendBuffer:
 	;; now add the length of data being sent
 	add hl, bc
 
-	;; FIXME if HL > 2048 then throw an error / or rather loop in 2K chunks
-
 	push hl						; HL = length of sending body
 
 	EspSend "AT+CIPSEND="

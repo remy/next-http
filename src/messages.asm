@@ -1,7 +1,7 @@
 	MODULE Err
-openTCP		DC "TCP open failed"
-badOption	DC "Unknown option"
+badOption	DC "Unknown command option"
 varNotFound	DC "NextBASIC string variable not found"
+ESPTimeout	DC "WiFi/server timeout"
 
 	ENDMODULE
 

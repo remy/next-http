@@ -15,6 +15,7 @@ MMU7_E000_NR_57                 equ $57     ;Set a Spectrum RAM page at position
 
 CPUSpeed              		equ $07
 
-; System variables
-VARS                    	EQU $5c4b	; addr of variables area
-NEXT_ONE_r3             	EQU $19b8           ; find next variable
+VARS                    	EQU $5c4b		; addr of variables area
+NEXT_ONE_r3             	EQU $19b8           	; find next variable
+
+ESPTimeout              	EQU 65535*4;65535 	; Use 10000 for 3.5MHz, but 28NHz needs to be 65535

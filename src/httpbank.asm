@@ -141,6 +141,7 @@ Exit
 
 	INCLUDE "vars.asm"
 	INCLUDE "messages.asm"
+	INCLUDE "esp-timeout.asm"
 	INCLUDE "uart.asm"
 	INCLUDE "wifi.asm"
 	INCLUDE "utils.asm"

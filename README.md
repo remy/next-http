@@ -23,13 +23,14 @@ Run with no arguments to see the help.
 - _todo_ / to discover
 - When using a domain name, I've found that `CNAME` records result is `DNS Error` so make sure to use `A` records ideally.
 - There's no SSL/TLS support - ensure your host is on *plain* http.
+- Large binary get on cpsect seems to fail (or my ESP is returning the data oddly)
 
 ## Todo
 
-- [ ] Timeout on esp comms
 - [ ] Support offset
 - [ ] Thorough check of argument processing
 - [ ] Potentially reset esp if failing to respond (AT+RST)
+- [x] Timeout on esp comms
 - [x] Support NextBASIC variables in the args, i.e. `-b a$`
 - [x] Test calling from NextBASIC (with trailing comment)
 - [x] Check POST or GET for > 512 bytes
