@@ -107,36 +107,36 @@ readFromNextBASIC
 
 		;; via https://gitlab.com/thesmog358/tbblue/-/blob/master/src/asm/dot_commands/$.asm
 		ld bc, (currentOption)
-		ld a, (bc)           			; get the string letter
-	        and $df 				; capitalise
+		ld a, (bc)				; get the string letter
+		and $df 				; capitalise
 		cp 'A'
 		jr c, .parseError			; bail if < A
 		cp 'Z'+1
-		jp nc, .parseError          		; or if > Z
+		jp nc, .parseError			; or if > Z
 		and $1f
 		ld c, a					; C=bits 0..4 of letter
 		set 6, c				; bit 6=1 for strings
 		ld hl, (VARS)
 .findVariable
-	        ld a, (hl)				; first letter of next variable
+		ld a, (hl)				; first letter of next variable
 		and $7f
-	        jr z, .varNotFound			; on if $80 encountered (end of vars)
+		jr z, .varNotFound			; on if $80 encountered (end of vars)
 		cp c
 		jr z, .variableFound			; on if matches string name
 		push de
 		push bc
 		call48k NEXT_ONE_r3			; DE=next variable
 		pop bc
-		ex de, hl                   		; HL=next variable
+		ex de, hl				; HL=next variable
 		pop de
-		jr .findVariable                 	; back to check it
+		jr .findVariable			; back to check it
 .variableFound:
 		CSP_BREAK
 		inc hl
 		ld c, (hl)
 		inc hl
-		ld b, (hl)	                  	; BC=string length
-		inc hl          	            	; HL=string address
+		ld b, (hl)				; BC=string length
+		inc hl					; HL=string address
 
 		ldir					; copy HL to DE
 		inc de

@@ -1,3 +1,20 @@
+; DE = buffer to write to
+; HL = pointer to string to copy
+; DE <- byte after new string inserted
+; Modifies: AF, HL, DE
+;
+; Copies until it reaches a null byte in HL (when length is unknown)
+CopyDEtoHL:
+.loop
+		ld a, (hl)
+		and a : jr z, .done
+		ld (de), a
+		inc hl
+		inc de
+		jr .loop
+.done
+		ret
+
 ; DE = pointer to string that's null terminated
 ; HL <- string length
 ; Modifies: DE

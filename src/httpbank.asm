@@ -20,7 +20,6 @@
 
 		;; Dot commands always start at $2000, with HL=address of command tail
 	ORG 	ORG_ADDRESS
-; __bin_b DISP    DISP_ADDRESS
 start:
 		jr .init
 		DB NAME, " v", VERSION 			; meh, just because I can :)
@@ -31,15 +30,12 @@ start:
 		;ld sp, State.stackTop
 
 		;; set cpu speed to 28mhz
-		NextRegRead CPUSpeed       		; Read CPU speed
-		and %11                         	; Mask out everything but the current desired speed
-		ld (Exit.cpu), a	             	; Save current speed so it can be restored on exit
-		nextreg CPUSpeed, %11       		; Set current desired speed to 28MHz
+		NextRegRead CPUSpeed			; Read CPU speed
+		and %11					; Mask out everything but the current desired speed
+		ld (Exit.cpu), a			; Save current speed so it can be restored on exit
+		nextreg CPUSpeed, %11			; Set current desired speed to 28MHz
 
-		;; TODO parse the command line arguments
-		;; TODO [ ] test from command line
-		;; TODO [ ] test from NextBASIC
-		;; TODO [ ] test from NextBASIC using .$ call
+		;; parse the command line arguments
 		; ld hl, .testFakeArgumentsLine
 		call Parse.start
 
@@ -63,14 +59,21 @@ start:
 
 		;; if type = 0 => get, = 1 => post, else ¯\_(ツ)_/¯
 		ld a, (State.type)
+		ld (Wifi.skipReply), a			; if GET then clear the banks and make sure not to skip the content
 		and a : jr z, Get
 		cp 1 : jr z, Post
 		call Parse.showHelp
 
-Post							; FIXME hard limit on 2048 bytes due to CIPSEND
-		ld (Wifi.skipReply), a
+Post
 		ld de, requestBuffer
 		ld hl, Strings.post
+		ld bc, 5				; "POST "
+		ldir
+
+		ld hl, State.url			; copies user URL
+		call CopyDEtoHL
+
+		ld hl, Strings.postTail			; adds the content type, etc
 		ld bc, Strings.postLen
 		ldir
 
@@ -95,22 +98,15 @@ Post							; FIXME hard limit on 2048 bytes due to CIPSEND
 		jr LoadPackets				; ensure we drain the ESP
 
 Get
-		;; if GET then clear the banks and make sure not to skip the content
-		ld (Wifi.skipReply), a
 		call Bank.erase
 		ld de, requestBuffer
 		ld hl, Strings.get
 		ld bc, 4
 		ldir					; "GET "
+
 		ld hl, State.url
-.loop
-		ld a, (hl)
-		and a : jr z, .done
-		ld (de), a
-		inc hl
-		inc de
-		jr .loop
-.done
+		call CopyDEtoHL
+
 		ld hl, Strings.newLine
 		ld bc, 3
 		ldir

@@ -7,9 +7,9 @@ userBank	DEFB 0
 pageA		EQU MMU4_8000_NR_54
 pageB		EQU MMU5_A000_NR_55
 
-                                        ; NOTE: MMU3/5 are safe from being
-                                        ;       paged out when making NextZXOS
-                                        ;       calls (unlike MMU0/1/6/7)
+					; NOTE: MMU3/5 are safe from being
+					;       paged out when making NextZXOS
+					;       calls (unlike MMU0/1/6/7)
 
 buffer		EQU $8000
 

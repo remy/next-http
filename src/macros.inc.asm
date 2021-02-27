@@ -2,12 +2,12 @@
 CSP_BREAK MACRO : IFDEF TESTING : break : ENDIF : ENDM
 
 call48k MACRO address
-        	rst     $18
-        	DEFW    address
+		rst $18
+		DEFW address
 	ENDM
 
 PrintChar MACRO
-        	rst $10
+		rst $10
 	ENDM
 
 
@@ -63,7 +63,7 @@ EspSend MACRO Text
 		call 	espSend
 		jr 	.txtE
 .txtB
-    	DB Text
+	DB Text
 .txtE
 	ENDM
 
@@ -73,18 +73,18 @@ EspCmd MACRO Text
 		call 	espSend
 		jr 	.txtE
 .txtB
-    	DB Text
-    	DB 13, 10
+	DB Text
+	DB 13, 10
 .txtE
 	ENDM
 
 EspCmdOkErr MACRO text
 		EspCmd text
-    		call checkOkErr
-    	ENDM
+		call checkOkErr
+	ENDM
 
 NextRegRead MACRO Register
 		ld bc, $243B             ; Port.NextReg = $243B
 		ld a, Register
 		call NextRegReadProc
-        ENDM
+	ENDM
