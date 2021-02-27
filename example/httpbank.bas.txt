@@ -1,15 +1,15 @@
 #autoline 10
+#program httbank
 
 h$="next.marbles2.com"
 b$="30"
+
 LOAD "httpbank.bas.txt" BANK 30
 PRINT "posting"
-../httpbank.dot post -b b$ -h h$ -l 20
+../httpbank post -b b$ -h h$ -l 20
 PRINT "done, now getting"
-../httpbank.dot get -h next.marbles2.com -b 31 : ; $3E
+../httpbank get -h next.marbles2.com -b 31 : ; $3E
 PRINT "complete, reading"
 CLS
 BANK 31 COPY 0,6912 TO 5,0: ; load the data into L1
-; a$= BANK 31 PEEK$ (0,~0): ; read until we hit the null char
-; PRINT "got: ";a$
 PAUSE 0

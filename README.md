@@ -18,6 +18,22 @@ Options:
 
 Run with no arguments to see the help.
 
+## Using from NextBASIC
+
+If the dot command isn't shipped as part of the distro and you want to ship `httpbank` as part of your project, you will need to call the dot command from a relative path. You might also need to set variables, such as a bank number through NextBASIC and pass this to `httpbank`. At time of writing (Feb 2021) the `.$` command doesn't support relative paths, so NextBASIC variable reading is support as part of `httpbank`.
+
+The only variables that `httpbank` supports are single letter string variables.
+
+Assuming `httpbank` is in the same directory as your NextBASIC file, the following prefix is required: `../` (dot dots and a slash). See the code below for the full example:
+
+```
+10 BANK NEW b
+20 b$ = STR$ b : REM store as a string
+30 c$ = "256" : REM we'll send 256 bytes from bank $b
+30 ../httpbank post -b b$ -h example.com -l c$
+40 PRINT "done"
+```
+
 ## Limits
 
 - _todo_ / to discover
@@ -28,6 +44,7 @@ Run with no arguments to see the help.
 ## Todo
 
 - [ ] Support offset
+- [ ] Surface DNS error
 - [ ] Thorough check of argument processing
 - [ ] Potentially reset esp if failing to respond (AT+RST)
 - [x] Timeout on esp comms

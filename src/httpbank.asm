@@ -159,7 +159,7 @@ diagBinPcLo 	EQU ((100*diagBinSz)%8192)*10/8192
     	DISPLAY "Binary size: ",/D,diagBinSz," (",/D,diagBinPcHi,".",/D,diagBinPcLo,"% of dot command 8kiB)"
 
 	IFNDEF TESTING
-		SAVEBIN "httpbank.dot",start,last-start
+		SAVEBIN "httpbank",start,last-start
 		DISPLAY "prod build"
 	ELSE
 		DISPLAY "test build"
