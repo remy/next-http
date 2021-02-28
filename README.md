@@ -43,6 +43,7 @@ Assuming `httpbank` is in the same directory as your NextBASIC file, the followi
 
 ## Todo
 
+- [ ] Support cspect (without additional hardware)
 - [ ] Support offset
 - [ ] Reduce memory used for host and URL (currently max RFC length)
 - [ ] Thorough check of argument processing
