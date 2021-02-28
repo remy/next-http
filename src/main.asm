@@ -2,7 +2,7 @@
 	SLDOPT COMMENT WPMEM, LOGPOINT, ASSERTION
 	OPT reset --zxnext --syntax=abfw
 
-	; DEFINE TESTING
+	DEFINE TESTING
 
 	INCLUDE "version.inc.asm"
 	INCLUDE "macros.inc.asm"
@@ -16,20 +16,23 @@
 		CSPECTMAP "httpbank.map"
 		DISPLAY "Adding jump to ",/H,testStart
 testStart:
-		; ld hl, testFakeArgumentsLine
+		ld hl, testFakeArgumentsLine
 		call start
 		ret
 testFakeArgumentsLine
-		DZ  "post -b 22 -h www.127.0.0.1.xip.io -l 20 -p 8080"
+		DZ  "post -h 192.168.1.118 -p 8080 -b 22 -l 2 -o 22"
 
 	ENDIF
 
 start:
 	DISPLAY "Start @ ",/H,$
-		jr .init
-		; DB NAME, " v", VERSION 			; meh, just because I can :)
+		jr init
 
-.init:
+bankError:
+		ld hl, Err.bankError
+		jp Error
+
+init:
 		di
 		ld (Exit.stack), sp			; set my own stack so I can use $e000-$ffff
 		;ld sp, State.stackTop
@@ -46,6 +49,7 @@ start:
 		;; page in our bank
 		ld de, State.bank
 		call StringToNumber16
+		jr c, bankError
 		ld a, l					; expecting HL to be < 144 (total number of banks in 2mb)
 		call Bank.init
 
@@ -61,9 +65,14 @@ start:
 		ld a, (State.type)
 		ld (Wifi.skipReply), a			; if GET then clear the banks and make sure not to skip the content
 		and a : jr z, Get
-		cp 1 : jr z, Post
-		call Parse.showHelp
+		jr Post
 
+lengthError:
+		ld hl, Err.lengthError
+		jp Error
+offsetError:
+		ld hl, Err.offsetError
+		jp Error
 Post
 		ld de, requestBuffer
 		ld hl, Strings.post
@@ -80,7 +89,9 @@ Post
 		push de
 		ld de, State.length
 		call StringLength
-		ld b, h : ld c, l			; BC = HL (BC = string length of "length" value)
+		jr c, lengthError
+		ld b, h
+		ld c, l					; BC = HL (BC = string length of "length" value)
 		pop de					; DE = responseBuffer (again)
 		ld hl, State.length
 		ldir					; POST / ... Content-Length: 64
@@ -89,9 +100,18 @@ Post
 		ld bc, 5
 		ldir					; POST header ready
 
+		ld de, State.offset			; load and prepare the offset
+		call StringToNumber16			; HL = offset
+		jr c, offsetError
+
+		ld bc, Bank.buffer			; BC is our starting point
+		add hl, bc				; then add the offset
+		ld (Wifi.bufferPointer), hl		; and now data will be stored here.
+
 		ld de, State.length
 		call StringToNumber16
-		ld b, h : ld c, l			; BC = HL
+		ld b, h
+		ld c, l					; BC = HL
 		ld hl, requestBuffer
 		call Wifi.tcpSendBuffer
 

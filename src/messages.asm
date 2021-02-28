@@ -3,13 +3,16 @@ ESPTimeout	DC "1 WiFi/server timeout"
 hostConnect	DC "2 Failed to connect to host"
 errorConnect	DC "3 Cannot open TCP connection"
 badOption	DC "4 Unknown command option"
-varNotFound	DC "5 NextBASIC string variable not found"
+varNotFound	DC "5 NextBASIC variable not found"
 wifiInit	DC "6 WiFi chip init failed"
 tcpSend1	DC "7 HTTP send fail"
 tcpSend2	DC "8 HTTP send fail"
 tcpSend3	DC "9 HTTP send fail"
 tcpSend4	DC "A HTTP send fail"
 readTimeout	DC "B HTTP read timeout"
+bankError	DC "C Bank arg error"
+lengthError	DC "D Length arg error"
+offsetError	DC "E Offset arg error"
 	ENDMODULE
 
 	MODULE Msg

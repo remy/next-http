@@ -1,6 +1,6 @@
-# httpbank (WIP)
+# httpbank - for the Spectrum Next (WIP)
 
-Intended usage:
+Usage:
 
 ```
 .httpbank post -b 22 -l 1024 -h 127.0.0.1 -p 8080 -u /send
@@ -34,12 +34,17 @@ Assuming `httpbank` is in the same directory as your NextBASIC file, the followi
 40 PRINT "done"
 ```
 
+## Installation
+
+You can save the `httpbank` to your own `/dot` directory, or you can run it from your working directory using a relative path `../httpbank`.
+
 ## Limits
 
 - When using a domain name, I've found that `CNAME` records result is `DNS Error` so make sure to use `A` records ideally - you'll see error 2.
 - There's no SSL/TLS support - ensure your host is on *plain* http.
 - Large binary get on cpsect seems to fail (or my ESP is returning the data oddly)
 - CSpect's ESP "emulation" doesn't have an 8-bit mode, so if you're sending or receiving bytes that are in the 8-bit range, i.e. above `$7F` the emulation won't work. You can of course attach a real ESP 01 device and
+- Zesarux requires ESP bridging - I've not been able to test this, if you have feedback, please let me know.
 
 ## Todo
 
@@ -89,7 +94,7 @@ Then include the `esp-debug.bin` that was saved on  your Next to help debug the 
 - Follows this [code convention](https://github.com/remy/z80-code-conventions)
 - Entry point is main.asm
 
-## With thanks to
+## With special thanks to
 
 - [Alexander Sharikhin](https://github.com/nihirash) - via internet-nextplorer (which uart.asm and much of wifi.asm is based)
 - [Robin Verhagen-Guest](https://github.com/Threetwosevensixseven/NXtel) - via nxtp and nxtel source code
@@ -97,4 +102,10 @@ Then include the `esp-debug.bin` that was saved on  your Next to help debug the 
 
 ## License
 
-- [MIT](https://rem.mit-license.org/)
+It's in the license link, but all the same:
+
+> THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND
+
+This software simplifies access to the web from a machine that is typically disconnected. Please use this software for good, but I provide no warranty, or help for that matter, if this software is used for bad. It is what it is.
+
+- [Full MIT license](https://rem.mit-license.org/)

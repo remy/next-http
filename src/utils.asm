@@ -42,27 +42,28 @@ PrintRst16:
 	        di
 		ret
 
-; DE = points to the base 10 number string in RAM.
+; DE = points to the base 10 number null terminated string.
 ; HL <- 16 bit value of DE
+; Fc <- carry set on error
 ; Modifies: A, BC
 ;
 ;     HL is the 16-bit value of the number
 ;     DE points to the byte after the number
-;     BC is HL/10
 ;     z flag reset (nz)
-;     c flag reset (nc)
-; Size:  23 bytes
-; Speed: 104n+42+11c
-;       n is the number of digits
-;       c is at most n-2
-;       at most 595 cycles for any 16-bit decimal value
 StringToNumber16:
 	ld hl, 0				; init HL to zero
 ConvLoop:
 	ld a, (de)
+	and a
+	ret z					; null character exit
+
 	sub $30					; take DE and subtract $30 (48 starting point for numbers in ascii)
-	cp 10					; is A < 10
-	ret nc
+	ret c					; if we have a carry, then we're
+
+	scf					; set the carry flag to test-
+	cp 10					; if A >= 10 then we also have an error
+	jr nc, .error
+
 	inc de
 
 	ld b, h					; copy HL to BC
@@ -78,3 +79,7 @@ ConvLoop:
 	jr nc, ConvLoop
 	inc h
 	jr ConvLoop
+
+.error
+	scf
+	ret

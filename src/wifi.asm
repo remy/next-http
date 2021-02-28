@@ -116,6 +116,7 @@ espSendT:
 ; HL = header string
 ; BC = length of data to send
 ; Modifies: AF, BC, DE, HL
+;
 ; Then sends pointer at DE plus the contents of Bank.buffer
 tcpSendBuffer:
 	push bc						; BC will be popped when in .sendBody
@@ -155,7 +156,8 @@ tcpSendBuffer:
 	jp .headerLoop
 
 .sendBody
-	ld hl, Bank.buffer					; now send the memory buffer
+	ld hl, (bufferPointer)					; now send the memory buffer
+	CSP_BREAK
 	pop bc
 .bodyLoop
 	ld a, (hl)
@@ -166,7 +168,10 @@ tcpSendBuffer:
 
 	inc hl
 
-	dec bc : ld a, b : or c : jr nz, .bodyLoop
+	dec bc
+	ld a, b
+	or c
+	jr nz, .bodyLoop
 
 .exit
 	ld a, 13 : call Uart.write
@@ -282,14 +287,20 @@ getPacket:
 	ld (hl), a
 	inc hl
 
-	dec bc : ld a, b : or c : jr nz, .readp
+	dec bc
+	ld a, b
+	or c
+	jr nz, .readp
 	ld (bufferPointer), hl
 	ret
 .skipbuff
 	push bc
 	call Uart.read
 	pop bc
-	dec bc : ld a, b : or c : jr nz, .skipbuff
+	dec bc
+	ld a, b
+	or c
+	jr nz, .skipbuff
 	CSP_BREAK
 	ret
 
@@ -306,7 +317,8 @@ getPacket:
 	push  hl
         call Uart.read
         pop hl
-	cp ':' : ret z
+	cp ':'
+	ret z
 	sub 0x30
 	ld c,l
 	ld b,h
