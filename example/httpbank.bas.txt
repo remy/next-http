@@ -1,18 +1,22 @@
 #autoline 10
 #program httpbank
 
+CLS
 BANK 30 ERASE : BANK 31 ERASE
 
-h$="192.168.1.118"
+h$="next.remysharp.com"
 b$="30"
 
 LOAD "httpbank.bas.txt" BANK 30
 PRINT "posting"
-../httpbank.dot post -b b$ -h h$ -p p$ -l 20
+../httpbank post -b b$ -h h$ -l 20
 PRINT "done"
 PRINT "now getting"
-../httpbank.dot get -h h$ -p p$ -b 31 -u / : ; $3E
-PRINT "complete, reading"
-CLS
-BANK 31 COPY 0,6912 TO 5,0: ; load the data into L1
+; http://next.remysharp.com/test-bytes responds with 256 bytes 0-$ff
+../httpbank get -h h$ -b 31 -o 100 -u /test-bytes : ; $3E
+PRINT "complete, reading substring:"
+
+; peek from offset (100) + 48 (which is the start of numbers in ascii)
+r$= BANK 31 PEEK$ (148,32)
+PRINT INVERSE 1;r$
 PAUSE 0

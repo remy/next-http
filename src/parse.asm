@@ -138,7 +138,7 @@ readFromNextBASIC
 		inc hl					; HL=string address
 
 		ldir					; copy HL to DE
-		inc de
+
 		xor a
 		ld (de), a				; null terminate
 
