@@ -23,10 +23,10 @@ init:
 		add a, a
 		ld (userBank), a
 
-		;; backup the banks that are sitting over $C000 and $E000
+		;; backup the banks that are sitting over $8000 and $A000
 		;; note that with a dot file, the stack originally is sitting at $FF42
-		;; so do use this area, I need to set my own stackTop (see vars.asm)
-		NextRegRead pageA
+		;; so if I do use this area, I need to set my own stackTop
+		NextRegRead pageA		; loads A with pageA bank number
 		ld (prevBankA), a
 		NextRegRead pageB
 		ld (prevBankB), a

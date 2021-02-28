@@ -2,7 +2,7 @@
 	SLDOPT COMMENT WPMEM, LOGPOINT, ASSERTION
 	OPT reset --zxnext --syntax=abfw
 
-	DEFINE TESTING
+	; DEFINE TESTING
 
 	INCLUDE "version.inc.asm"
 	INCLUDE "macros.inc.asm"
@@ -16,11 +16,11 @@
 		CSPECTMAP "httpbank.map"
 		DISPLAY "Adding jump to ",/H,testStart
 testStart:
-		ld hl, testFakeArgumentsLine
+		; ld hl, testFakeArgumentsLine
 		call start
 		ret
 testFakeArgumentsLine
-		DZ  "post -h 192.168.1.118 -p 8080 -b 22 -l 2 -o 22"
+		DZ  "get -h 192.168.1.118 -p 8080 -u /test -b 5 -o -0"
 
 	ENDIF
 
@@ -118,7 +118,27 @@ Post
 		jr LoadPackets				; ensure we drain the ESP
 
 Get
+		ld de, State.offset			; load and prepare the offset
+		ld a, (de)
+		cp '-'
+		jr z, .skipErase
+
+		;; if the offset is negative we won't erase
+		push de
 		call Bank.erase
+		pop de
+		jr .offset
+.skipErase
+		inc de					; since the offset was negative, move to the next char
+.offset
+		call StringToNumber16			; HL = offset
+		jp c, offsetError
+
+		ld bc, Bank.buffer			; BC is our starting point
+		add hl, bc				; then add the offset
+		ld (Wifi.bufferPointer), hl		; and now data will be stored here.
+
+
 		ld de, requestBuffer
 		ld hl, Strings.get
 		ld bc, 4
@@ -133,9 +153,6 @@ Get
 		ld hl, requestBuffer
 
 		call Wifi.tcpSendString
-
-		ld hl, Bank.buffer			; store the buffer in the user bank
-		ld (Wifi.bufferPointer), hl
 LoadPackets
 		call Wifi.getPacket
 		ld a, (Wifi.closed)

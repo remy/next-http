@@ -16,6 +16,8 @@ Options:
 - `-p` port number (defaults to 80)
 - `-u` url (defaults to `/`)
 
+Note that by default a GET request will empty out the bank selected. If you want to preserve the data in the bank, use a negative value for the offset, i.e. `-b 5 -o -0` will load the http request into bank 5, preserving the RAM and inserting at memory position 0 (in fact, `$4000` in RAM).
+
 Run with no arguments to see the help.
 
 ## Using from NextBASIC
@@ -48,11 +50,11 @@ You can save the `httpbank` to your own `/dot` directory, or you can run it from
 
 ## Todo
 
-- [ ] Support offset
-- [ ] Thorough check of argument processing
-- [ ] Add support to leave bank untouched on GET
-- [ ] Reduce memory used for host and URL (currently max RFC length)
 - [ ] Potentially reset esp if failing to respond (AT+RST)
+- [ ] Support length on GET
+- [x] Add support to leave bank untouched on GET
+- [x] Thorough check of argument processing
+- [x] Support offset
 - [x] Number and document errors
 - [x] Explore cspect (without additional hardware)
 - [x] Surface DNS error
