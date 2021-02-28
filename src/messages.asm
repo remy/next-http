@@ -1,8 +1,14 @@
 	MODULE Err
-badOption	DC "Unknown command option"
-varNotFound	DC "NextBASIC string variable not found"
-ESPTimeout	DC "WiFi/server timeout"
-
+ESPTimeout	DC "1 WiFi/server timeout"
+hostConnect	DC "2 Failed to connect to host"
+errorConnect	DC "3 Cannot open TCP connection"
+badOption	DC "4 Unknown command option"
+varNotFound	DC "5 NextBASIC string variable not found"
+wifiInit	DC "6 WiFi chip init failed"
+tcpSend1	DC "7 HTTP send fail"
+tcpSend2	DC "8 HTTP send fail"
+tcpSend3	DC "9 HTTP send fail"
+tcpSend4	DC "A HTTP send fail"
 	ENDMODULE
 
 	MODULE Msg

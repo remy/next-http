@@ -1,4 +1,3 @@
-; CSP_BREAK MACRO : break : ENDM
 CSP_BREAK MACRO : IFDEF TESTING : break : ENDIF : ENDM
 
 call48k MACRO address

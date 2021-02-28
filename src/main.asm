@@ -1,28 +1,33 @@
 	DEVICE ZXSPECTRUM48
 	SLDOPT COMMENT WPMEM, LOGPOINT, ASSERTION
-	OPT reset --zxnext --syntax=abfw --zxnext=cspect
+	OPT reset --zxnext --syntax=abfw
+
+	; DEFINE TESTING
 
 	INCLUDE "version.inc.asm"
 	INCLUDE "macros.inc.asm"
 	INCLUDE "constants.inc.asm"
 
-	; DEFINE TESTING
+	;; Dot commands always start at $2000, with HL=address of command tail
+	ORG $2000
 
-	DEFINE DISP_ADDRESS     $2000
-
-	IFNDEF TESTING
-		DEFINE ORG_ADDRESS      $2000
-	ELSE
+	IFDEF TESTING
 		OPT --zxnext=cspect
-		DEFINE ORG_ADDRESS      $8003
-		DEFINE TEST_CODE_PAGE   223         ; using the last page of 2MiB RAM (in emulator)
+		CSPECTMAP "httpbank.map"
+		DISPLAY "Adding jump to ",/H,testStart
+testStart:
+		; ld hl, testFakeArgumentsLine
+		call start
+		ret
+testFakeArgumentsLine
+		DZ  "post -b 22 -h www.127.0.0.1.xip.io -l 20 -p 8080"
+
 	ENDIF
 
-		;; Dot commands always start at $2000, with HL=address of command tail
-	ORG 	ORG_ADDRESS
 start:
+	DISPLAY "Start @ ",/H,$
 		jr .init
-		DB NAME, " v", VERSION 			; meh, just because I can :)
+		; DB NAME, " v", VERSION 			; meh, just because I can :)
 
 .init:
 		di
@@ -36,7 +41,6 @@ start:
 		nextreg CPUSpeed, %11			; Set current desired speed to 28MHz
 
 		;; parse the command line arguments
-		; ld hl, .testFakeArgumentsLine
 		call Parse.start
 
 		;; page in our bank
@@ -48,7 +52,6 @@ start:
 		;; FIXME remove
 		; jr Exit
 
-		;; TODO add timeout for wifi connect (try with ESP removed)
 		call Wifi.init
 		jp c, Error
 
@@ -112,7 +115,7 @@ Get
 		ldir
 		ld hl, requestBuffer
 
-		call Wifi.tcpSendZ
+		call Wifi.tcpSendString
 
 		ld hl, Bank.buffer			; store the buffer in the user bank
 		ld (Wifi.bufferPointer), hl
@@ -125,6 +128,7 @@ LoadPackets
 
 ; HL = pointer to error string
 Error
+		CSP_BREAK
 		xor a					; set A = 0
 		scf					; Exit Fc=1
 
@@ -162,14 +166,13 @@ diagBinPcLo 	EQU ((100*diagBinSz)%8192)*10/8192
 		SAVEBIN "httpbank",start,last-start
 		DISPLAY "prod build"
 	ELSE
-		DISPLAY "test build"
+		SAVEBIN "httpbank.dot",testStart,last-testStart
 
-testStart:
-		; setup fake argument and launch loader
-		ld      hl,testFakeArgumentsLine
-		call 	start
-		ret
-testFakeArgumentsLine   DZ  "post -h httpbank.remysharp.com -u /picture.scr -b 31"
+		DEFINE LAUNCH_CSPECT
 
-		SAVESNA "httpbank.sna",testStart
+		IFDEF LAUNCH_CSPECT : IF ((_ERRORS = 0) && (_WARNINGS = 0))
+			SHELLEXEC "hdfmonkey put /Applications/cspect/app/cspect-next-2gb.img httpbank.dot /devel/httpbank.dot"
+			SHELLEXEC "mono /Applications/cspect/app/cspect.exe -r -w5 -basickeys -zxnext -nextrom -exit -brk -tv -mmc=/Applications/cspect/app/cspect-next-2gb.img -map=./httpbank.map"
+		ENDIF : ENDIF
+		DISPLAY "TEST BUILD"
 	ENDIF

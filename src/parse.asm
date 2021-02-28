@@ -131,7 +131,6 @@ readFromNextBASIC
 		pop de
 		jr .findVariable			; back to check it
 .variableFound:
-		CSP_BREAK
 		inc hl
 		ld c, (hl)
 		inc hl

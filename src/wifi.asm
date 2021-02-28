@@ -11,6 +11,10 @@ closed DB 1
 skipReply DB 0
 firstRead DB 1
 
+	DISPLAY "Wifi error @ ",/H,$
+error DW 0
+fail DW 0
+
 ; Initialize Wifi chip to work
 init:
 	call Uart.init
@@ -23,17 +27,22 @@ init:
 	or a
 	ret
 .initError
-	ld hl, .errMsg
+	ld hl, Err.wifiInit
 	scf
 	ret
-.errMsg
-	DB "WiFi chip init failed!",0
 
 ; HL - host pointer
 ; DE - port pointer
 openTCP:
 	push de
 	push hl
+
+	;; setup the custom error types
+	ld hl, Err.hostConnect
+	ld (error), hl
+	ld hl, Err.errorConnect
+	ld (fail), hl
+
 	EspCmdOkErr "AT+CIPCLOSE" ; Don't care about result. Just close if it didn't happens before
 	EspSend 'AT+CIPSTART="TCP","'
 	pop hl
@@ -64,6 +73,7 @@ checkOkErr:
 	call Uart.read : cp 'O' : jr nz, checkOkErr
 	call Uart.read : cp 'R' : jr nz, checkOkErr
 	call .flushToLF
+	ld hl, (error)
 	scf
 	ret
 .failStart
@@ -71,6 +81,7 @@ checkOkErr:
 	call Uart.read : cp 'I' : jr nz, checkOkErr
 	call Uart.read : cp 'L' : jr nz, checkOkErr
 	call .flushToLF
+	ld hl, (fail)
 	scf
 	ret
 .flushToLF
@@ -104,12 +115,19 @@ espSendT:
 ; HL = header string
 ; BC = length of data to send
 ; Modifies: AF, BC, DE, HL
-; Adds CR LF
-; Then sends pointer at DE
+; Then sends pointer at DE plus the contents of Bank.buffer
 tcpSendBuffer:
 	push bc						; BC will be popped when in .sendBody
-
 	push hl						; strLen will overwrite HL
+
+	;; setup the custom error types
+	push hl
+	ld hl, Err.tcpSend1
+	ld (error), hl
+	ld hl, Err.tcpSend2
+	ld (fail), hl
+	pop hl
+
 	ld d, h
 	ld e, l
 	call StringLength
@@ -155,10 +173,18 @@ tcpSendBuffer:
 	jp checkOkErr
 
 
-; HL - stringZ to send
-; Adds CR LF
-tcpSendZ:
+; HL = string to send
+; Modifies: AF, BC, DE
+; Sends the contents of HL to ESP (auto adding the CR+LF to the message)
+tcpSendString:
 	push hl
+
+	;; setup the custom error types
+	ld hl, Err.tcpSend3
+	ld (error), hl
+	ld hl, Err.tcpSend4
+	ld (fail), hl
+
 	EspSend "AT+CIPSEND="
 	pop de : push de
 	call StringLength

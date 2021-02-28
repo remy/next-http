@@ -44,9 +44,11 @@ Assuming `httpbank` is in the same directory as your NextBASIC file, the followi
 ## Todo
 
 - [ ] Support offset
-- [ ] Surface DNS error
+- [ ] Reduce memory used for host and URL (currently max RFC length)
 - [ ] Thorough check of argument processing
 - [ ] Potentially reset esp if failing to respond (AT+RST)
+- [ ] Number and document errors
+- [x] Surface DNS error
 - [x] Timeout on esp comms
 - [x] Support NextBASIC variables in the args, i.e. `-b a$`
 - [x] Test calling from NextBASIC (with trailing comment)

@@ -14,7 +14,7 @@
         "--sld=${workspaceFolder}/src/httpbank.sld",
         "--nologo",
         "--fullpath",
-        "${workspaceFolder}/src/httpbank.asm",
+        "${workspaceFolder}/src/main.asm",
         "--sym=${workspaceFolder}/src/httpbank.labels"
       ],
       "presentation": {
