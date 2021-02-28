@@ -9,6 +9,7 @@ tcpSend1	DC "7 HTTP send fail"
 tcpSend2	DC "8 HTTP send fail"
 tcpSend3	DC "9 HTTP send fail"
 tcpSend4	DC "A HTTP send fail"
+readTimeout	DC "B HTTP read timeout"
 	ENDMODULE
 
 	MODULE Msg
@@ -24,7 +25,7 @@ help
 		DB "-b num    bank to use",CR
 		DB "-h str    host address",CR
 		DB "-p num*   port (default 80)",CR
-		DB "-u str*   url (default /)",CR, CR
+		DB "-u str*   url (default /)",CR
 		DB "-l num*   length of data",CR
 		DB "          (required with POST)",CR
 		DB "-o num*   offset in bank",CR

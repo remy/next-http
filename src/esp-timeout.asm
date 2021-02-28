@@ -23,18 +23,18 @@ Value 	EQU $+1
 Success:	pop af
 		pop hl
 		ret
-Failure:	ld hl, Err.ESPTimeout 			; Ignore current stack depth, and just jump
+Failure:	ld hl, (Wifi.timeout)
 HandleError:
-		call Error
-Stop:
+		call Error 			; Ignore current stack depth, and just jump
+Stop:						; Not sure this is ever called
 		Border 2
 		jr Stop
 Rollover:
 Value2 	EQU $+1
-		ld hl, SMC 				; Check the two upper values
+		ld hl, SMC			; Check the two upper values
 		ld a, h
 		or l
-		jr z, Failure 				; If we hit here, 32 bit value is $00000000
+		jr z, Failure			; If we hit here, 32 bit value is $00000000
 		dec hl
 		ld (Value2), hl
 		ld hl, ESPTimeout mod 65536

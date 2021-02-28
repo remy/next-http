@@ -12,6 +12,9 @@ pageB		EQU MMU5_A000_NR_55
 					;       calls (unlike MMU0/1/6/7)
 
 buffer		EQU $8000
+	IFDEF TESTING
+debug		DW $A000
+	ENDIF
 
 ; A <- 16K bank number to use as active bank
 ; Modifies: A, BC (via macro)

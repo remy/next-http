@@ -1,14 +1,17 @@
 #autoline 10
-#program httbank
+#program httpbank
 
-h$="next.marbles2.com"
+BANK 30 ERASE : BANK 31 ERASE
+
+h$="192.168.1.118"
 b$="30"
 
 LOAD "httpbank.bas.txt" BANK 30
 PRINT "posting"
-../httpbank post -b b$ -h h$ -l 20
-PRINT "done, now getting"
-../httpbank get -h next.marbles2.com -b 31 : ; $3E
+../httpbank.dot post -b b$ -h h$ -p p$ -l 20
+PRINT "done"
+PRINT "now getting"
+../httpbank.dot get -h h$ -p p$ -b 31 -u / : ; $3E
 PRINT "complete, reading"
 CLS
 BANK 31 COPY 0,6912 TO 5,0: ; load the data into L1

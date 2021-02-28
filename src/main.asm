@@ -49,9 +49,6 @@ start:
 		ld a, l					; expecting HL to be < 144 (total number of banks in 2mb)
 		call Bank.init
 
-		;; FIXME remove
-		; jr Exit
-
 		call Wifi.init
 		jp c, Error
 
@@ -166,12 +163,14 @@ diagBinPcLo 	EQU ((100*diagBinSz)%8192)*10/8192
 		SAVEBIN "httpbank",start,last-start
 		DISPLAY "prod build"
 	ELSE
-		SAVEBIN "httpbank.dot",testStart,last-testStart
+		SAVEBIN "httpbank-debug.dot",testStart,last-testStart
 
 		DEFINE LAUNCH_CSPECT
 
 		IFDEF LAUNCH_CSPECT : IF ((_ERRORS = 0) && (_WARNINGS = 0))
-			SHELLEXEC "hdfmonkey put /Applications/cspect/app/cspect-next-2gb.img httpbank.dot /devel/httpbank.dot"
+			;; delete any autoexec ba
+			SHELLEXEC "(hdfmonkey rm /Applications/cspect/app/cspect-next-2gb.img /nextzxos/autoexec.bas > /dev/null) || exit 0"
+			SHELLEXEC "hdfmonkey put /Applications/cspect/app/cspect-next-2gb.img httpbank-debug.dot /devel/httpbank.dot"
 			SHELLEXEC "mono /Applications/cspect/app/cspect.exe -r -w5 -basickeys -zxnext -nextrom -exit -brk -tv -mmc=/Applications/cspect/app/cspect-next-2gb.img -map=./httpbank.map"
 		ENDIF : ENDIF
 		DISPLAY "TEST BUILD"

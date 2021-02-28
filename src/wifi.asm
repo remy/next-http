@@ -14,6 +14,7 @@ firstRead DB 1
 	DISPLAY "Wifi error @ ",/H,$
 error DW 0
 fail DW 0
+timeout DW Err.ESPTimeout
 
 ; Initialize Wifi chip to work
 init:
@@ -208,15 +209,26 @@ tcpSendString:
 ; Puts the contents of an http request in buffer
 ; modifies: AF, BC, DE, HL
 getPacket:
+	ld hl, Err.readTimeout
+	ld (timeout), hl
 	call Uart.read
 	cp '+' : jr z, .ipdBegun    ; "+IPD," packet
 	cp 'O' : jr z, .closedBegun ; It enough to check "OSED\n" :-)
 	jr getPacket
 .closedBegun
-	call Uart.read : cp 'S' : jr nz, getPacket
+	call Uart.read
+	cp 'K' : jr z, .cspectHack
+	cp 'S' : jr nz, getPacket
 	call Uart.read : cp 'E' : jr nz, getPacket
 	call Uart.read : cp 'D' : jr nz, getPacket
 	call Uart.read : cp 13 : jr nz, getPacket
+	ld a, 1
+	ld (closed), a
+	ret
+.cspectHack
+	;; I don't know why, but cspect gives us OK\n\r after the http request
+	call Uart.read : cp 13 : jr nz, getPacket
+	call Uart.read : cp 10 : jr nz, getPacket
 	ld a, 1
 	ld (closed), a
 	ret
@@ -278,6 +290,7 @@ getPacket:
 	call Uart.read
 	pop bc
 	dec bc : ld a, b : or c : jr nz, .skipbuff
+	CSP_BREAK
 	ret
 
 .slurp
