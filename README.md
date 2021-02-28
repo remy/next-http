@@ -1,4 +1,4 @@
-# httpbank - for the Spectrum Next (WIP)
+# httpbank - for the Spectrum Next (public beta)
 
 Usage:
 
