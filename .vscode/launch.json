@@ -18,24 +18,23 @@
         "memoryModel": "ZX48K",
         "Z80N": true
       },
-      "rootFolder": "${workspceFolder}",
+      "rootFolder": "${fileDirname}",
       "tmpDir": "${fileDirname}",
-      // "tmpDir": "${workspceFolder}",
       "sjasmplus": [
         {
-          "path": "${workspaceFolder}/src/httpbank.sld",
+          "path": "${fileDirname}/${fileBasenameNoExtension}.sld",
           "useFiles": true,
           "asm": "sjasmplus",
-          "mainFile": "httpbank.asm"
+          "mainFile": "${fileBasenameNoExtension}.asm"
         }
       ],
       "disassemblerArgs": {
         "esxdosRst": true
       },
-      "commandsAfterLaunch": ["-assertion enable"],
-      "load": "${workspaceFolder}/httpbank.sna",
+      "commandsAfterLaunch": ["-assertion enable", "-rmv"],
+      "load": "${fileDirname}/${fileBasenameNoExtension}.sna",
       "startAutomatically": false,
-      "preLaunchTask": "sjasmplus"
+      "preLaunchTask": "currentfile"
     },
     {
       "type": "dezog",

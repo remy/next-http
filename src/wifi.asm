@@ -10,6 +10,7 @@ bufferPointer DW 0
 closed DB 1
 skipReply DB 0
 firstRead DB 1
+byteCounter DB 0
 
 	DISPLAY "Wifi error @ ",/H,$
 error DW 0
@@ -157,7 +158,6 @@ tcpSendBuffer:
 
 .sendBody
 	ld hl, (bufferPointer)					; now send the memory buffer
-	CSP_BREAK
 	pop bc
 .bodyLoop
 	ld a, (hl)
@@ -210,6 +210,8 @@ tcpSendString:
 	ld a, 13 : call Uart.write
 	ld a, 10 : call Uart.write
 	jp checkOkErr
+
+
 
 ; Puts the contents of an http request in buffer
 ; modifies: AF, BC, DE, HL
@@ -270,8 +272,10 @@ getPacket:
 	ld (firstRead), a
 .headerProcessed
 	pop hl
-	push de
+	push de					; load DE (back) into BC
 	pop bc
+
+	ld de, Wifi.byteCounter
 .readp
 	ld a, h
 	cp HIGH Bank.buffer
@@ -279,14 +283,32 @@ getPacket:
 
 	;; read UART into A
 	push bc
-	push hl
 	call Uart.read
-	pop hl
 	pop bc
 
 	ld (hl), a
 	inc hl
 
+.check7bitSupport				; this opcode gets replaced if we're 7bit
+	xor a
+	jr nc, .skip7bitSupport
+
+	ld a, (de)				; track the byte counter
+	inc a
+	and 3
+	jr nz, .skipDecode
+
+	; hl - 4 bytes (to point back to the start)
+	dec hl
+	dec hl
+	dec hl
+	dec hl
+	call Base64.Decode
+
+	xor a					; reset the tracker
+.skipDecode
+	ld (de), a
+.skip7bitSupport
 	dec bc
 	ld a, b
 	or c
@@ -301,7 +323,6 @@ getPacket:
 	ld a, b
 	or c
 	jr nz, .skipbuff
-	CSP_BREAK
 	ret
 
 .slurp
@@ -312,11 +333,9 @@ getPacket:
 
 
 .count_ipd_length
-	ld hl,0			; count length
+	ld hl, 0			; count length
 .cil1
-	push  hl
         call Uart.read
-        pop hl
 	cp ':'
 	ret z
 	sub 0x30

@@ -51,6 +51,8 @@ init
 .baudTable:
 		DW 243,248,256,260,269,278,286,234
 
+; A <- result
+; Modifies: BC
 read:
 		call InitESPTimeout
 		ld bc, UART_GetStatus

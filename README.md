@@ -1,10 +1,12 @@
 # httpbank - for the Spectrum Next (public beta)
 
+A utility for application developers to talk to web servers to exchange small blocks of data, such as high scores, game progress, etc.
+
 Usage:
 
 ```
-.httpbank post -b 22 -l 1024 -h 127.0.0.1 -p 8080 -u /send
-.httpbank get -b 26 -h example.com -u /receive
+.httpbank post -b 22 -l 1024 -h 192.168.1.100 -p 8080 -u /send
+.httpbank get -b 26 -h next.remysharp.com -u /bytes
 ```
 
 Options:
@@ -15,10 +17,15 @@ Options:
 - `-h` host address
 - `-p` port number (defaults to 80)
 - `-u` url (defaults to `/`)
+- `-7` enabled base64 decoding (useful for supporting [Cspect](http://cspect.org/) and 7-bit binary exchange*)
 
 Note that by default a GET request will empty out the bank selected. If you want to preserve the data in the bank, use a negative value for the offset, i.e. `-b 5 -o -0` will load the http request into bank 5, preserving the RAM and inserting at memory position 0 (in fact, `$4000` in RAM).
 
 Run with no arguments to see the help.
+
+*Cpsect's emulated ESP support used 7-bit, which means if you want to send binary data, you will need to base64 encode your payload. Using the `-7` flag with `httpbank` will support decoding and support Cpsect. This is not required if you only plan to exchange 7-bit data (like readable test) or support hardware. See the example folder for a server returning binary using base64 encoding.
+
+**What this is not:** a web browser or a tool for downloading large files over the web (>16K - yes, that's "large"). Feel free to build on this source code if that's what you're looking for.
 
 ## Using from NextBASIC
 
@@ -36,20 +43,24 @@ Assuming `httpbank` is in the same directory as your NextBASIC file, the followi
 40 PRINT "done"
 ```
 
+Note that `httpbank` will expect a BASIC variable to represent a single argument value and you cannot combine multiple arguments into a single variable (i.e. `h$="-h example -p 8080` won't work).
+
 ## Installation
 
 You can save the `httpbank` to your own `/dot` directory, or you can run it from your working directory using a relative path `../httpbank`.
 
 ## Limits
 
-- When using a domain name, I've found that `CNAME` records result is `DNS Error` so make sure to use `A` records ideally - you'll see error 2.
+- When using a domain name, I've found that `CNAME` records can result in `DNS Error` so make sure to use `A` records ideally - you'll see error `2`.
 - There's no SSL/TLS support - ensure your host is on *plain* http.
 - Large binary get on cpsect seems to fail (or my ESP is returning the data oddly)
 - CSpect's ESP "emulation" doesn't have an 8-bit mode, so if you're sending or receiving bytes that are in the 8-bit range, i.e. above `$7F` the emulation won't work. You can of course attach a real ESP 01 device and
 - Zesarux requires ESP bridging - I've not been able to test this, if you have feedback, please let me know.
+- I've noticed when using Cspect's emulation, if the host can't be reached, Cspect will hang
 
 ## Todo
 
+- [ ] Add server example code
 - [ ] Potentially reset esp if failing to respond (AT+RST)
 - [ ] Support length on GET
 - [x] Add support to leave bank untouched on GET
@@ -65,7 +76,9 @@ You can save the `httpbank` to your own `/dot` directory, or you can run it from
 
 ## Debugging and problems
 
-This repo also includes a debug build of httpbank. The difference is that it will add all the ESP read and write to the second half of the bank you use. This way you can debug from the real hardware and capture exactly what's going on.
+This repo also includes a debug build of `httpbank`. The difference is that it will add all the ESP read and write to the second half of the bank you use. This way you can debug from the real hardware and capture exactly what's going on.
+
+**Important** the debug dot command uses the second half of the bank you use, so ideally test with less than 8K to help debugging.
 
 If you need to file an issue, this information is extremely valuable for debugging - and if you're not comfortable including the file in [an issue](https://github.com/remy/next-httpbank/issues/new) as an attachment, you can email me directly at remy@remysharp.com. To capture this, run:
 
@@ -76,9 +89,9 @@ If you need to file an issue, this information is extremely valuable for debuggi
 
 Then include the `esp-debug.bin` that was saved on  your Next to help debug the issue.
 
-## Errors
+## Error codes
 
-- 1 WiFi/server timeout
+- 1 WiFi/server timeout - no ESP available or can't start communication
 - 2 Failed to connect to host - possible DNS error (see limits above)
 - 3 Cannot open TCP connection - failed to complete TCP handshake
 - 4 Unknown command option
@@ -89,6 +102,10 @@ Then include the `esp-debug.bin` that was saved on  your Next to help debug the 
 - 9 HTTP send fail - GET connect error
 - A HTTP send fail - GET response fail
 - B HTTP read timeout
+- C Bank arg error - bank is required and must be a number
+- D Length arg error - must be a number
+- E Offset arg error - must be a number
+- F Port error - must be a number
 
 ## Development
 

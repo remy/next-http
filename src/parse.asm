@@ -50,6 +50,10 @@ startToken
 parseOption
 		ld a, (hl)
 		inc hl
+
+		;; flag based args
+		cp '7' : jr z, parse7bit
+
 		call checkForEnd
 		jr z, parseError
 
@@ -72,8 +76,16 @@ parseOption
 		cp 'o' : jr z, parseOffset
 		jr parseError
 
+parse7bit:
+		;; modify the code on the fly, and add SCF to set a carry flag
+		;; in the Wifi.getPacket routine so that it'll decode the
+		;; incoming stream as 7-bit instead of 8-bit
+		ld a, $37
+		ld (Wifi.getPacket.check7bitSupport), a
+		jr startToken
+
 continueOption:
-		ld (currentOption), de
+		ld (currentOption), de			; required for NextBASIC replacement
 		ld a, b
 .loop
 		ld (de), a
@@ -81,17 +93,25 @@ continueOption:
 		ld a, (hl)
 		inc hl
 
-		cp '$' : jp z, readFromNextBASIC	; then we have a NextBASIC var
+		cp '$'
+		jp z, readFromNextBASIC	; then we have a NextBASIC var
 
-		cp ' ' : jr z, .optionDone
-		call checkForEnd
+		cp ' '
 		jr z, .optionDone
+		call checkForEnd
+		jp z, .finished
+
 		jr .loop
 .optionDone:
 		xor a
 		ld (de), a				; add null terminator to the option
 
 		jp startToken
+
+.finished
+		xor a
+		ld (de), a				; add null terminator to the option
+		ret
 
 parseBank:	ld de, State.bank : jr continueOption
 parseHost:	ld de, State.host : jr continueOption

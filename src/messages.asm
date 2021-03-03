@@ -13,6 +13,7 @@ readTimeout	DC "B HTTP read timeout"
 bankError	DC "C Bank arg error"
 lengthError	DC "D Length arg error"
 offsetError	DC "E Offset arg error"
+portError	DC "F Port error"
 	ENDMODULE
 
 	MODULE Msg
@@ -27,12 +28,12 @@ help
 		DB "Args:",CR
 		DB "-b num    bank to use",CR
 		DB "-h str    host address",CR
-		DB "-p num*   port (default 80)",CR
-		DB "-u str*   url (default /)",CR
+		DB "-p num*   port",CR
+		DB "-u str*   url",CR
 		DB "-l num*   length of data",CR
 		DB "          (required with POST)",CR
 		DB "-o num*   offset in bank",CR
-		DB "          (default 0)",CR, CR
+		DB "-7        base64 decode",CR,CR
 		DB "* denotes optional with defaults",CR
 		DB "-> FAQ @ tinyurl.com/httpbank",CR,0
 

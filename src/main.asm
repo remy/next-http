@@ -20,7 +20,7 @@ testStart:
 		call start
 		ret
 testFakeArgumentsLine
-		DZ  "get -h 192.168.1.118 -p 8080 -u /test -b 5 -o -0"
+		DZ  "get -h 192.168.1.118 -p 8080 -u /7bytes -b 20 -7"
 
 	ENDIF
 
@@ -34,6 +34,7 @@ bankError:
 
 init:
 		di
+		push ix					; protect this register and I'll mess with it later
 		ld (Exit.stack), sp			; set my own stack so I can use $e000-$ffff
 		;ld sp, State.stackTop
 
@@ -53,8 +54,22 @@ init:
 		ld a, l					; expecting HL to be < 144 (total number of banks in 2mb)
 		call Bank.init
 
+	IFDEF TESTING
+		;; must happen after Bank.init
+		;; copy the variables to memory for debugging
+		ld de, (Bank.debug)
+		ld hl, State.Start
+		ld bc, State.StateLen
+		ldir
+		ld (Bank.debug), de
+	ENDIF
+
 		call Wifi.init
 		jp c, Error
+
+		ld de, State.port
+		call StringToNumber16
+		jr c, portError
 
 		ld hl, State.host
 		ld de, State.port
@@ -72,6 +87,9 @@ lengthError:
 		jp Error
 offsetError:
 		ld hl, Err.offsetError
+		jp Error
+portError:
+		ld hl, Err.portError
 		jp Error
 Post
 		ld de, requestBuffer
@@ -125,7 +143,9 @@ Get
 
 		;; if the offset is negative we won't erase
 		push de
+	IFNDEF TESTING
 		call Bank.erase
+	ENDIF
 		pop de
 		jr .offset
 .skipErase
@@ -162,7 +182,6 @@ LoadPackets
 
 ; HL = pointer to error string
 Error
-		CSP_BREAK
 		xor a					; set A = 0
 		scf					; Exit Fc=1
 
@@ -172,6 +191,7 @@ Exit
 .nop
 .stack equ $+1
 		ld sp, SMC				; the original stack pointer is set here upon load
+		pop ix
 .cpu equ $+3:
 		nextreg CPUSpeed, SMC       		; Restore original CPU speed
 		ei
@@ -186,6 +206,7 @@ Exit
 	INCLUDE "bank.asm"
 	INCLUDE "parse.asm"
 	INCLUDE "strings.asm"
+	INCLUDE "base64decode.asm"
 
 requestBuffer	BLOCK 256				; Reqest buffer is only used for the POST headers, not the body
 last

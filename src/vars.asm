@@ -1,4 +1,5 @@
 	MODULE State
+Start		EQU $
 POST		EQU 1
 GET 		EQU 0
 type		DB 0				; default to GET requests
@@ -16,5 +17,5 @@ url		DB "/",0
 port		DB "80",0			; < 999999 port
 		DS 4
 ; cmd		DEFB "get -h scores.marbles2.com -b 22", 0
-
+StateLen	EQU $-Start
 	ENDMODULE
