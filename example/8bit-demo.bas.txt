@@ -1,13 +1,10 @@
 #autoline 10
-#program debug-demo
+#program 8bit-demo
 
 LAYER 0
-
 CLS
 
 ; http://next.remysharp.com/7bit-test responds with binary 6912 bytes encoded as 7-bit using base64
-../httpbank-debug.dot get -b 20 -h next.remysharp.com -7 -u /7bit-test
-
-SAVE "esp-debug.bin" BANK 20
+../httpbank get -b 5 -h next.remysharp.com -o -0 -u /test : ; $0a
 
 PAUSE 0
