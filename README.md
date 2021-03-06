@@ -55,11 +55,11 @@ You can save the `httpbank` to your own `/dot` directory, or you can run it from
 
 - When using a domain name, I've found that `CNAME` records can result in `DNS Error` so make sure to use `A` records ideally - you'll see error `2`.
 - There's no SSL/TLS support - ensure your host is on *plain* http.
-- Large binary get on cpsect seems to fail (or my ESP is returning the data oddly)
-- CSpect's ESP "emulation" doesn't have an 8-bit mode, so if you're sending or receiving bytes that are in the 8-bit range, i.e. above `$7F` the emulation won't work. You can of course attach a real ESP 01 device and
+- Large binary `get` on Cpsect intermittently to fail (or my ESP is returning the data oddly)
+- CSpect's ESP "emulation" doesn't have an 8-bit mode, so if you're sending or receiving bytes that are in the 8-bit range, i.e. above `$7F` the emulation won't work. If you want want to support cspect, then you can use the `-7` flag and your server will need to use base64 encoding. If your data is 7-bit (i.e. you have no byte values larger than `$7F`) then Cspect should work without extra options.
 - Zesarux requires ESP bridging - I've not been able to test this, if you have feedback, please let me know.
-- I've noticed when using Cspect's emulation, if the host can't be reached, Cspect will hang
-- When using the `offset` you are constrained to 16K, so if the offset is 8,192, then the max length is also 8,192
+- I've noticed when using Cspect's emulation, if the host can't be reached, Cspect will hang entirely.
+- When using the `offset` you are constrained to 16K, so if the offset is 8,192, then the max length is also 8,192 (there's no error checking on this currently)
 
 ## Todo
 
@@ -94,28 +94,28 @@ If you need to file an issue, this information is extremely valuable for debuggi
 
 ```
 10 ../httpbank-debug.dot -h example.com -u / -b 20
-20 SAVE "esp-debug.bin" BANK 20, 8192, 8192
+20 SAVE "httpbank-debug.bin" BANK 20
 ```
 
-Then include the `esp-debug.bin` that was saved on  your Next to help debug the issue.
+Then include the `httpbank-debug.bin` that was saved on  your Next to help debug the issue.
 
 ## Error codes
 
-- 1 WiFi/server timeout - no ESP available or can't start communication
-- 2 Failed to connect to host - possible DNS error (see limits above)
-- 3 Cannot open TCP connection - failed to complete TCP handshake
-- 4 Unknown command option
-- 5 NextBASIC string variable not found - when passing `x$` variable to arguments
-- 6 WiFi chip init failed - initialisation error
-- 7 HTTP send fail - POST connect error
-- 8 HTTP send fail - POST response fail
-- 9 HTTP send fail - GET connect error
-- A HTTP send fail - GET response fail
-- B HTTP read timeout
-- C Bank arg error - bank is required and must be a number
-- D Length arg error - must be a number
-- E Offset arg error - must be a number
-- F Port error - must be a number
+- `1` WiFi/server timeout - no ESP available or can't start communication
+- `2` Failed to connect to host - possible DNS error (see limits above)
+- `3` Cannot open TCP connection - failed to complete TCP handshake
+- `4` Unknown command option
+- `5` NextBASIC string variable not found - when passing `x$` variable to arguments
+- `6` WiFi chip init failed - initialisation error
+- `7` HTTP send fail - POST connect error
+- `8` HTTP send fail - POST response fail
+- `9` HTTP send fail - GET connect error
+- `A` HTTP send fail - GET response fail
+- `B` HTTP read timeout
+- `C` Bank arg error - bank is required and must be a number
+- `D` Length arg error - must be a number
+- `E` Offset arg error - must be a number
+- `F` Port error - must be a number
 
 ## Development
 
