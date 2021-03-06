@@ -4,7 +4,6 @@ currentOption:	DW 0
 showHelp:
 		ld hl, Msg.help
 		call PrintRst16
-		pop af					; discard the return address (from call Parse.start)
 		and a					; Exit Fc=0
 		jp Exit.nop
 

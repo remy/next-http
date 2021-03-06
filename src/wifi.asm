@@ -11,6 +11,7 @@ closed DB 1
 skipReply DB 0
 firstRead DB 1
 byteCounter DB 0
+restarted DB 0
 
 	DISPLAY "Wifi error @ ",/H,$
 error DW 0
@@ -29,9 +30,38 @@ init:
 	or a
 	ret
 .initError
+	call RetartESP
+	jr c, .failed
+	jr Wifi.init
+.failed
 	ld hl, Err.wifiInit
 	scf
 	ret
+
+RetartESP:
+	ld a, (restarted)
+	and a
+	jr nz, .alreadyTried
+	ld a, 1
+	ld (restarted), a
+
+	EspCmd "AT+RST"
+	jr .checkWifiConnect
+.alreadyTried
+	scf
+	ret
+.checkWifiConnect:
+	call Uart.read
+	cp 'F' : jr z, .connectedStart ; WIFI CONNECTED
+	jr .checkWifiConnect
+.connectedStart
+	call Uart.read : cp 'I' : jr nz, .checkWifiConnect
+	call Uart.read : cp ' '  : jr nz, .checkWifiConnect
+	call Uart.read : cp 'G'  : jr nz, .checkWifiConnect  ; searching for "WIFI CONNECTED"
+	call flushToLF
+	or a
+	ret
+
 
 ; HL - host pointer
 ; DE - port pointer
@@ -66,7 +96,7 @@ checkOkErr:
 .okStart
 	call Uart.read : cp 'K' : jr nz, checkOkErr
 	call Uart.read : cp 13  : jr nz, checkOkErr
-	call .flushToLF
+	call flushToLF
 	or a
 	ret
 .errStart
@@ -74,7 +104,7 @@ checkOkErr:
 	call Uart.read : cp 'R' : jr nz, checkOkErr
 	call Uart.read : cp 'O' : jr nz, checkOkErr
 	call Uart.read : cp 'R' : jr nz, checkOkErr
-	call .flushToLF
+	call flushToLF
 	ld hl, (error)
 	scf
 	ret
@@ -82,13 +112,13 @@ checkOkErr:
 	call Uart.read : cp 'A' : jr nz, checkOkErr
 	call Uart.read : cp 'I' : jr nz, checkOkErr
 	call Uart.read : cp 'L' : jr nz, checkOkErr
-	call .flushToLF
+	call flushToLF
 	ld hl, (fail)
 	scf
 	ret
-.flushToLF
+flushToLF
 	call Uart.read
-	cp 10 : jr nz, .flushToLF
+	cp 10 : jr nz, flushToLF
 	ret
 
 ; Send buffer to UART

@@ -2,6 +2,7 @@
 	SLDOPT COMMENT WPMEM, LOGPOINT, ASSERTION
 	OPT reset --zxnext --syntax=abfw
 
+
 	; DEFINE TESTING
 
 	INCLUDE "version.inc.asm"
