@@ -47,7 +47,7 @@ erase:
 		ret
 
 restore:
-		push af
+		push af					; protect the F flags
 		ld a, (prevBankA)
 		nextreg	pageA, a
 		ld a, (prevBankB)

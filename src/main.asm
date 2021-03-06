@@ -16,11 +16,15 @@
 		CSPECTMAP "httpbank.map"
 		DISPLAY "Adding jump to ",/H,testStart
 testStart:
-		; ld hl, testFakeArgumentsLine
+		ld hl, testFakeArgumentsLine
 		call start
 		ret
 testFakeArgumentsLine
-		DZ  "get -h 192.168.1.118 -p 8080 -u /7bytes -b 20 -7"
+		;; test:
+		DZ  "get -h next.remysharp.com -u /k6912 -b 5 -o -0"
+		; DZ  "get -h remy-testing.000webhostapp.com -b 20"
+		; DZ  "get -b 5 -h remy-testing.000webhostapp.com -o -0 -7"
+		; DZ  "get -h next.remysharp.com -u /test -b 5 -o -0"
 
 	ENDIF
 
@@ -35,6 +39,8 @@ bankError:
 init:
 		di
 		push ix					; protect this register and I'll mess with it later
+		ld ixl, 0				; IXL is being used to track the padding length
+
 		ld (Exit.stack), sp			; set my own stack so I can use $e000-$ffff
 		;ld sp, State.stackTop
 
@@ -82,9 +88,6 @@ init:
 		and a : jr z, Get
 		jr Post
 
-lengthError:
-		ld hl, Err.lengthError
-		jp Error
 offsetError:
 		ld hl, Err.offsetError
 		jp Error
@@ -92,44 +95,26 @@ portError:
 		ld hl, Err.portError
 		jp Error
 Post
-		ld de, requestBuffer
-		ld hl, Strings.post
-		ld bc, 5				; "POST "
-		ldir
+		ld de, requestBuffer			; DE is our working buffer
 
-		ld hl, State.url			; copies user URL
-		call CopyDEtoHL
-
-		ld hl, Strings.postTail			; adds the content type, etc
-		ld bc, Strings.postLen
-		ldir
-
-		push de
-		ld de, State.length
-		call StringLength
-		jr c, lengthError
-		ld b, h
-		ld c, l					; BC = HL (BC = string length of "length" value)
-		pop de					; DE = responseBuffer (again)
+		call Headers.Post
+		ld hl, State.url
+		call Headers.Url
+		call Headers.MethodTrailer
+		ld hl, State.host
+		call Headers.Host
 		ld hl, State.length
-		ldir					; POST / ... Content-Length: 64
+		call Headers.PostLengthAndTrailer
 
-		ld hl, Strings.emptyLine
-		ld bc, 5
-		ldir					; POST header ready
+		ld hl, requestBuffer
 
 		ld de, State.offset			; load and prepare the offset
 		call StringToNumber16			; HL = offset
 		jr c, offsetError
-
 		ld bc, Bank.buffer			; BC is our starting point
 		add hl, bc				; then add the offset
 		ld (Wifi.bufferPointer), hl		; and now data will be stored here.
 
-		ld de, State.length
-		call StringToNumber16
-		ld b, h
-		ld c, l					; BC = HL
 		ld hl, requestBuffer
 		call Wifi.tcpSendBuffer
 
@@ -138,38 +123,37 @@ Post
 Get
 		ld de, State.offset			; load and prepare the offset
 		ld a, (de)
+		;; if the offset is negative we won't erase
 		cp '-'
 		jr z, .skipErase
 
-		;; if the offset is negative we won't erase
 		push de
 	IFNDEF TESTING
 		call Bank.erase
 	ENDIF
 		pop de
-		jr .offset
+		jr .offsetApplied
 .skipErase
 		inc de					; since the offset was negative, move to the next char
-.offset
+.offsetApplied
 		call StringToNumber16			; HL = offset
 		jp c, offsetError
 
 		ld bc, Bank.buffer			; BC is our starting point
 		add hl, bc				; then add the offset
-		ld (Wifi.bufferPointer), hl		; and now data will be stored here.
+		ld (Wifi.bufferPointer), hl		; and now http response will be stored here.
 
+		;; prepare the http request headers
+		ld de, requestBuffer			; DE is our working buffer
 
-		ld de, requestBuffer
-		ld hl, Strings.get
-		ld bc, 4
-		ldir					; "GET "
-
+		call Headers.Get
 		ld hl, State.url
-		call CopyDEtoHL
+		call Headers.Url
+		call Headers.MethodTrailer
+		ld hl, State.host
+		call Headers.Host
+		call Headers.Trailer
 
-		ld hl, Strings.newLine
-		ld bc, 3
-		ldir
 		ld hl, requestBuffer
 
 		call Wifi.tcpSendString
@@ -186,6 +170,7 @@ Error
 		scf					; Exit Fc=1
 
 Exit
+		; CSP_BREAK
 		;; for a clean exit, the carry flag needs to be clear (and a)
 		call Bank.restore
 .nop
@@ -207,8 +192,12 @@ Exit
 	INCLUDE "parse.asm"
 	INCLUDE "strings.asm"
 	INCLUDE "base64decode.asm"
+	INCLUDE "headers.asm"
 
-requestBuffer	BLOCK 256				; Reqest buffer is only used for the POST headers, not the body
+		;; NOTE even though the request buffer is 256, it sits at the end
+		;; of our program in memory, and this currently is well under the
+		;; 8K limit of a dot file.
+requestBuffer	BLOCK 256				; Request buffer is only used for the POST headers, not the body
 last
 
 diagBinSz   	EQU last-start

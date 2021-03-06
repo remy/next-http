@@ -248,7 +248,7 @@ getPacket:
 
 	ld a, (skipReply)
 	cp 1
-	jr z, .slurp
+	jp z, .slurp
 
 	;; put the byte count (from the AT response) in DE (to later to be put in BC)
 	ex de, hl
@@ -272,10 +272,11 @@ getPacket:
 	ld (firstRead), a
 .headerProcessed
 	pop hl
-	push de					; load DE (back) into BC
-	pop bc
 
-	ld de, Wifi.byteCounter
+	ld b, d					; load DE (back) into BC
+	ld c, e
+
+	ld de, Base64.buffer
 .readp
 	ld a, h
 	cp HIGH Bank.buffer
@@ -286,29 +287,56 @@ getPacket:
 	call Uart.read
 	pop bc
 
+	; CSP_BREAK
+
+.check7bitSupport				; this opcode (JR nn) gets replaced if we're 7bit
+	jr .no7bitSupport
+
+	;; here be 7-bit / base64 decode support
+
+	ld (de), a
+	cp '='
+	jr nz, .skipPadding
+	inc ixl
+.skipPadding
+
+	ld a, e					; is the buffer length 4 bytes yet?
+	and 3
+	jr nz, .continue
+
+	push bc
+
+	call Base64.Decode			; modifies BC and AF only
+						; result is stored in Base64.output
+
+	ld a, 3
+	sub ixl					; calculate how many bytes we need to transfer
+
+	ld hl, Base64.output
+	ld de, (bufferPointer)
+	ld b, 0
+	ld c, a
+	ldir
+
+	ex de, hl				; update the tip of our result buffer
+	ld (bufferPointer), hl			; save
+	ld de, Base64.buffer-1			; reset DE to the start of the buffer (-1 because it'll immediately increment)
+
+	pop bc
+	jr .continue
+.skipDecode
+	ld (de), a
+	jr .continue
+
+	;; ^--- 7-bit / base64 decode support ends here ---
+
+.no7bitSupport
 	ld (hl), a
 	inc hl
 
-.check7bitSupport				; this opcode gets replaced if we're 7bit
-	xor a
-	jr nc, .skip7bitSupport
+.continue
+	inc de
 
-	ld a, (de)				; track the byte counter
-	inc a
-	and 3
-	jr nz, .skipDecode
-
-	; hl - 4 bytes (to point back to the start)
-	dec hl
-	dec hl
-	dec hl
-	dec hl
-	call Base64.Decode
-
-	xor a					; reset the tracker
-.skipDecode
-	ld (de), a
-.skip7bitSupport
 	dec bc
 	ld a, b
 	or c

@@ -2,6 +2,8 @@
 
 A utility for application developers to talk to web servers to exchange small blocks of data, such as high scores, game progress, etc.
 
+This works best on small blocks of data. Requesting a 7K `.scr` does work, but has been seen as intermittent. Requesting 1K will work pretty much every time.
+
 Usage:
 
 ```
@@ -57,12 +59,16 @@ You can save the `httpbank` to your own `/dot` directory, or you can run it from
 - CSpect's ESP "emulation" doesn't have an 8-bit mode, so if you're sending or receiving bytes that are in the 8-bit range, i.e. above `$7F` the emulation won't work. You can of course attach a real ESP 01 device and
 - Zesarux requires ESP bridging - I've not been able to test this, if you have feedback, please let me know.
 - I've noticed when using Cspect's emulation, if the host can't be reached, Cspect will hang
+- When using the `offset` you are constrained to 16K, so if the offset is 8,192, then the max length is also 8,192
 
 ## Todo
 
+- [ ] Test query string / quoting an argument, i.e. `-u "/?a=b"
 - [ ] Add server example code
 - [ ] Potentially reset esp if failing to respond (AT+RST)
 - [ ] Support length on GET
+- [ ] Test > 16K to see effects
+- [x] base64 version should stream to a buffer
 - [x] Add support to leave bank untouched on GET
 - [x] Thorough check of argument processing
 - [x] Support offset
@@ -73,6 +79,10 @@ You can save the `httpbank` to your own `/dot` directory, or you can run it from
 - [x] Support NextBASIC variables in the args, i.e. `-b a$`
 - [x] Test calling from NextBASIC (with trailing comment)
 - [x] Check POST or GET for > 512 bytes
+
+## Not supported / future
+
+- Chunked encoding
 
 ## Debugging and problems
 

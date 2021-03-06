@@ -77,11 +77,12 @@ parseOption
 		jr parseError
 
 parse7bit:
-		;; modify the code on the fly, and add SCF to set a carry flag
-		;; in the Wifi.getPacket routine so that it'll decode the
-		;; incoming stream as 7-bit instead of 8-bit
-		ld a, $37
+		;; modify the code on the fly, and nop the jump that skips over
+		;; the 7-bit support. A little expensive at 8 cycles, but really
+		;; not a huge deal.
+		ld a, 0
 		ld (Wifi.getPacket.check7bitSupport), a
+		ld (Wifi.getPacket.check7bitSupport+1), a
 		jr startToken
 
 continueOption:
