@@ -276,7 +276,14 @@ getPacket:
 	ld b, d					; load DE (back) into BC
 	ld c, e
 
+	;; NOTE: IXH is used for tracking the buffer offset, in case we exit
+	;; this routine and come back in half way through a base64 decoding
+	;; process.
+	;; IXL is used for tracking padding in the base64 message - this is
+	;; right at the end and can be 0-2
 	ld de, Base64.buffer
+	ld a, ixh
+	add de, a
 .readp
 	ld a, h
 	cp HIGH Bank.buffer
@@ -302,7 +309,7 @@ getPacket:
 
 	ld a, e					; is the buffer length 4 bytes yet?
 	and 3
-	jr nz, .continue
+	jr nz, .bufferNotFull
 
 	push bc
 
@@ -323,11 +330,15 @@ getPacket:
 	ld de, Base64.buffer-1			; reset DE to the start of the buffer (-1 because it'll immediately increment)
 
 	pop bc
+	ld ixh, 0				; reset the buffer offset counter
 	jr .continue
-.skipDecode
-	ld (de), a
-	jr .continue
+; .skipDecode
+; 	ld (de), a
+; 	jr .continue
 
+.bufferNotFull
+	inc ixh
+	jr .continue
 	;; ^--- 7-bit / base64 decode support ends here ---
 
 .no7bitSupport

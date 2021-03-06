@@ -63,11 +63,9 @@ You can save the `httpbank` to your own `/dot` directory, or you can run it from
 
 ## Todo
 
-- [ ] Test query string / quoting an argument, i.e. `-u "/?a=b"
 - [ ] Add server example code
-- [ ] Potentially reset esp if failing to respond (AT+RST)
-- [ ] Support length on GET
 - [ ] Test > 16K to see effects
+- [x] Test query string / quoting an argument, i.e. `-u /?a=z`
 - [x] base64 version should stream to a buffer
 - [x] Add support to leave bank untouched on GET
 - [x] Thorough check of argument processing
@@ -83,6 +81,8 @@ You can save the `httpbank` to your own `/dot` directory, or you can run it from
 ## Not supported / future
 
 - Chunked encoding
+- Potentially reset esp if failing to respond (AT+RST)
+- Support length on GET
 
 ## Debugging and problems
 

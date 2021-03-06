@@ -16,15 +16,16 @@
 		CSPECTMAP "httpbank.map"
 		DISPLAY "Adding jump to ",/H,testStart
 testStart:
-		ld hl, testFakeArgumentsLine
+		; ld hl, testFakeArgumentsLine
 		call start
 		ret
 testFakeArgumentsLine
 		;; test:
-		DZ  "get -h next.remysharp.com -u /k6912 -b 5 -o -0"
+		; DZ  "get -h 192.168.1.118 -p 8080 -u /test-query?foo=bar -b 10"
+		; DZ  "get -h next.remysharp.com -u /k6912 -b 5 -o -0"
 		; DZ  "get -h remy-testing.000webhostapp.com -b 20"
 		; DZ  "get -b 5 -h remy-testing.000webhostapp.com -o -0 -7"
-		; DZ  "get -h next.remysharp.com -u /test -b 5 -o -0"
+		; DZ  "get -h next.remysharp.com -u ",'"',"/7bit-test",'"'," -b 5 -o -0 -7"
 
 	ENDIF
 
