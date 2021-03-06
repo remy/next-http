@@ -16,11 +16,15 @@
 		CSPECTMAP "httpbank.map"
 		DISPLAY "Adding jump to ",/H,testStart
 testStart:
+		exx
+		ld hl, $9FFF
+		exx
 		; ld hl, testFakeArgumentsLine
 		call start
 		ret
 testFakeArgumentsLine
 		;; test:
+		DZ  "get -h 192.168.1.118 -p 8080 -u /7test -b 5 -o -0 -7"
 		; DZ  "get -h 192.168.1.118 -p 8080 -u /test-query?foo=bar -b 10"
 		; DZ  "get -h next.remysharp.com -u /k6912 -b 5 -o -0"
 		; DZ  "get -h remy-testing.000webhostapp.com -b 20"
@@ -40,7 +44,9 @@ bankError:
 init:
 		di
 		push ix					; protect this register and I'll mess with it later
+		push iy					; protect this register and I'll mess with it later
 		ld ixl, 0				; IXL is being used to track the padding length
+		ld ixh, 0
 
 		ld (Exit.stack), sp			; set my own stack so I can use $e000-$ffff
 		;ld sp, State.stackTop
@@ -177,6 +183,7 @@ Exit
 .nop
 .stack equ $+1
 		ld sp, SMC				; the original stack pointer is set here upon load
+		pop iy
 		pop ix
 .cpu equ $+3:
 		nextreg CPUSpeed, SMC       		; Restore original CPU speed

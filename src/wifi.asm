@@ -284,6 +284,29 @@ getPacket:
 	ld de, Base64.buffer
 	ld a, ixh
 	add de, a
+
+	IFDEF TESTING
+		and a
+		call nz, .captureIXState
+		jr .readp
+.captureIXState
+		ld iyh, d
+		ld iyl, e
+		exx
+		ld a, ixh
+		ld (hl), a
+		dec hl
+
+		ld d, iyh
+		ld e, iyl
+
+		ld (hl), e
+		dec hl
+		ld (hl), d
+		dec hl
+		exx
+		ret
+	ENDIF
 .readp
 	ld a, h
 	cp HIGH Bank.buffer
@@ -293,8 +316,6 @@ getPacket:
 	push bc
 	call Uart.read
 	pop bc
-
-	; CSP_BREAK
 
 .check7bitSupport				; this opcode (JR nn) gets replaced if we're 7bit
 	jr .no7bitSupport
@@ -307,7 +328,7 @@ getPacket:
 	inc ixl
 .skipPadding
 
-	ld a, e					; is the buffer length 4 bytes yet?
+	ld a, e  				; is the buffer length 4 bytes yet? DE is on a 4 byte edge
 	and 3
 	jr nz, .bufferNotFull
 
@@ -332,9 +353,6 @@ getPacket:
 	pop bc
 	ld ixh, 0				; reset the buffer offset counter
 	jr .continue
-; .skipDecode
-; 	ld (de), a
-; 	jr .continue
 
 .bufferNotFull
 	inc ixh

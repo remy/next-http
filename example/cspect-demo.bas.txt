@@ -1,6 +1,8 @@
 #autoline 10
 #program cspect-demo
 
+LAYER 0
+
 CLS
 
 ; http://next.remysharp.com/7bit-test responds with binary 6912 bytes encoded as 7-bit using base64
