@@ -1,18 +1,25 @@
 	MODULE Headers
 Post
 		ld hl, Strings.post
+		ld bc, 5
 		jr method
 
 Get
 		ld hl, Strings.get
+		ld bc, 4
 method
-		ld bc, 5
 		ldir
 		ret
 
-MethodTrailer
+GetTrailer
 		ld hl, Strings.reqTail
 		ld bc, Strings.reqTailLen
+		ldir
+		ret
+
+PostTrailer
+		ld hl, Strings.reqTail
+		ld bc, Strings.postLen
 		ldir
 		ret
 
@@ -23,7 +30,7 @@ MethodTrailer
 Host
 		push hl
 		ld hl, Strings.host
-		ld bc, 5
+		ld bc, 6
 		ldir
 		pop hl
 		;; intentionally fall through to copyHLtoDE
@@ -36,34 +43,25 @@ Url
 copyHLtoDE
 		ld a, (hl)
 		and a
-		jr z, .done
+		ret z
 		ld (de), a
 		inc hl
 		inc de
 		jr copyHLtoDE
-.done
+
+NewLine
+		ld hl, Strings.newLine
+		ld bc, 2
+		ldir
 		ret
 
-PostLengthAndTrailer
-		push de
-		push hl
-
-		ex de, hl
-		call StringLength
-		jr c, .lengthError
-		ld b, h
-		ld c, l					; BC = HL (BC = string length of "length" value)
-		pop hl					; HL = input buffer
-		pop de					; DE = output
+EndPost
+		ld hl, Strings.emptyLine
+		ld bc, 5
 		ldir
-		jr Trailer
+		ret
 
-.lengthError:
-		ld hl, Err.lengthError
-		;; jumping to error and exit here shouldn't matter as SP is
-		;; restored so our corrupted/unpushed state will be ignored
-		jp Error
-Trailer
+EndGet
 		ld hl, Strings.newLine
 		ld bc, 3
 		ldir

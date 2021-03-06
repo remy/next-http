@@ -161,6 +161,7 @@ tcpSendBuffer:
 	ld (fail), hl
 	pop hl
 
+	CSP_BREAK
 	ld d, h
 	ld e, l
 	call StringLength

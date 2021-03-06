@@ -2,7 +2,6 @@
 	SLDOPT COMMENT WPMEM, LOGPOINT, ASSERTION
 	OPT reset --zxnext --syntax=abfw
 
-
 	; DEFINE TESTING
 
 	INCLUDE "version.inc.asm"
@@ -25,12 +24,13 @@ testStart:
 		ret
 testFakeArgumentsLine
 		;; test:
-		DZ  "get -h 192.168.1.118 -p 8080 -u /7test -b 5 -o -0 -7"
+		; DZ "post -b 20 -h 192.168.1.118 -p 8080 -l 20"
+		; DZ "get -h rbmtest.atwebpages.com -u /test.txt -b 20"
+		; DZ  "get -h 192.168.1.118 -p 8080 -u /7test -b 5 -o -0 -7"
 		; DZ  "get -h 192.168.1.118 -p 8080 -u /test-query?foo=bar -b 10"
 		; DZ  "get -h next.remysharp.com -u /k6912 -b 5 -o -0"
 		; DZ  "get -h remy-testing.000webhostapp.com -b 20"
 		; DZ  "get -b 5 -h remy-testing.000webhostapp.com -o -0 -7"
-		; DZ  "get -h next.remysharp.com -u ",'"',"/7bit-test",'"'," -b 5 -o -0 -7"
 
 	ENDIF
 
@@ -108,13 +108,16 @@ Post
 		call Headers.Post
 		ld hl, State.url
 		call Headers.Url
-		call Headers.MethodTrailer
+		call Headers.PostTrailer
+		ld hl, State.length
+		call Headers.copyHLtoDE
+		call Headers.NewLine
 		ld hl, State.host
 		call Headers.Host
-		ld hl, State.length
-		call Headers.PostLengthAndTrailer
+		call Headers.EndPost
 
 		ld hl, requestBuffer
+		CSP_BREAK
 
 		ld de, State.offset			; load and prepare the offset
 		call StringToNumber16			; HL = offset
@@ -122,6 +125,10 @@ Post
 		ld bc, Bank.buffer			; BC is our starting point
 		add hl, bc				; then add the offset
 		ld (Wifi.bufferPointer), hl		; and now data will be stored here.
+
+		ld de, State.length
+		call StringToNumber16
+		ld b, h : ld c, l			; load BC with out POST length
 
 		ld hl, requestBuffer
 		call Wifi.tcpSendBuffer
@@ -157,10 +164,10 @@ Get
 		call Headers.Get
 		ld hl, State.url
 		call Headers.Url
-		call Headers.MethodTrailer
+		call Headers.GetTrailer
 		ld hl, State.host
 		call Headers.Host
-		call Headers.Trailer
+		call Headers.EndGet
 
 		ld hl, requestBuffer
 
