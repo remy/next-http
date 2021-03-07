@@ -25,7 +25,7 @@ Note that by default a GET request will empty out the bank selected. If you want
 
 Run with no arguments to see the help.
 
-*Cpsect's emulated ESP support used 7-bit, which means if you want to send binary data, you will need to base64 encode your payload. Using the `-7` flag with `httpbank` will support decoding and support Cpsect. This is not required if you only plan to exchange 7-bit data (like readable test) or support hardware. See the example folder for a server returning binary using base64 encoding.
+*Cpsect's emulated ESP support used 7-bit, which means if you want to send binary data, you will need to base64 encode your payload. Using the `-7` flag with `httpbank` will support decoding and support Cpsect. This is not required if you only plan to exchange 7-bit data (like readable text) or support hardware. See the example folder for a server returning binary using base64 encoding.
 
 **What this is not:** a web browser or a tool for downloading large files over the web (>16K - yes, that's "large"). Feel free to build on this source code if that's what you're looking for.
 
