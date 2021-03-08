@@ -8,7 +8,7 @@ Usage:
 
 ```
 .httpbank post -b 22 -l 1024 -h 192.168.1.100 -p 8080 -u /send
-.httpbank get -b 26 -h next.remysharp.com -u /bytes
+.httpbank get -b 26 -h data.remysharp.com -u /1
 ```
 
 Options:
@@ -63,8 +63,8 @@ You can save the `httpbank` to your own `/dot` directory, or you can run it from
 
 ## Todo
 
+- [ ] Base64 encode in POST
 - [ ] Add server example code
-- [ ] Test > 16K to see effects
 - [x] Potentially reset esp if failing to respond (AT+RST)
 - [x] Test query string / quoting an argument, i.e. `-u /?a=z`
 - [x] base64 version should stream to a buffer
