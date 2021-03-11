@@ -38,24 +38,6 @@ ErrorIfNoCarry MACRO ErrAddr
 .Continue:
 	ENDM
 
-
-Border	MACRO Colour
-	IF Colour=0
-		xor	a
-	ELSE
-		ld 	a, Colour
-	ENDIF
-		out 	(ULA_PORT), a
-	IF Colour=0
-		xor 	a
-	ELSE
-		ld 	a, Colour*8
-	ENDIF
-		ld 	(23624), a
-	ENDM
-
-
-
 EspSend MACRO Text
 		ld 	hl, .txtB
 		ld 	e, .txtE - .txtB

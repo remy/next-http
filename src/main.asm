@@ -24,11 +24,11 @@ testStart:
 		ret
 testFakeArgumentsLine
 		;; test:
-		DZ "post -b 20 -h 192.168.1.118 -p 8080 -u /1 -l 1 -7" ; send 1 byte encoded
+		; DZ "post -b 20 -f 2 -h 192.168.1.118 -p 8080 -u /1 -l 1 -7" ; send 1 byte encoded
 		; DZ "get -h rbmtest.atwebpages.com -u /test.txt -b 20"
 		; DZ  "get -h 192.168.1.118 -p 8080 -u /7test -b 5 -o -0 -7"
 		; DZ  "get -h 192.168.1.118 -p 8080 -u /test-query?foo=bar -b 10"
-		; DZ  "get -h next.remysharp.com -u /k6912 -b 5 -o -0"
+		; DZ  "get -b 5 -h data.remysharp.com -f 2 -u /2 -o -0 -7"
 		; DZ  "get -h remy-testing.000webhostapp.com -b 20"
 		; DZ  "get -b 5 -h remy-testing.000webhostapp.com -o -0 -7"
 
@@ -50,7 +50,10 @@ init:
 		ld ixh, 0
 
 		ld (Exit.stack), sp			; set my own stack so I can use $e000-$ffff
-		;ld sp, State.stackTop
+
+		ld a, (BORDCR)				; save SYSB the border for restore later
+		ld (Exit.border), a
+		call Border.Init
 
 		;; set cpu speed to 28mhz
 		NextRegRead CPUSpeed			; Read CPU speed
@@ -61,6 +64,26 @@ init:
 		;; parse the command line arguments
 		call Parse.start
 
+		;; set up the border flashing
+		ld de, State.border
+		ld a, (de)
+		cp $ff
+		jr z, .noBorder
+
+		call StringToNumber16
+		jr c, borderError
+		ld a, l
+		scf					; set carry as we're looking for > 7
+		cp 8
+		jr nc, borderError
+		ld (Border.newColour), a
+		jr .setupBank
+
+.noBorder
+		ld a, $c9
+		ld (Border), a
+
+.setupBank
 		;; page in our bank
 		ld de, State.bank
 		call StringToNumber16
@@ -86,6 +109,9 @@ init:
 		jr c, portError
 
 		ld hl, State.host
+		ld a, (hl)
+		and a
+		jr z, hostError
 		ld de, State.port
 		call Wifi.openTCP
 		jp c, Error
@@ -96,11 +122,21 @@ init:
 		and a : jr z, Get
 		jr Post
 
+hostError:
+		ld hl, Err.hostError
+		jp Error
+
+borderError:
+		ld hl, Err.borderError
+		jp Error
 offsetError:
 		ld hl, Err.offsetError
 		jp Error
 portError:
 		ld hl, Err.portError
+		jp Error
+lengthError:
+		ld hl, Err.lengthError
 		jp Error
 Post
 		ld de, requestBuffer			; DE is our working buffer
@@ -141,6 +177,7 @@ Post
 
 		ld de, State.length
 		call StringToNumber16
+		jr c, lengthError
 
 		;; TODO if base64 increase length
 
@@ -200,7 +237,7 @@ LoadPackets
 
 ; HL = pointer to error string
 Error
-		xor a					; set A = 0
+		xor a					; set A = 0 - TODO is this actually needed?
 		scf					; Exit Fc=1
 
 Exit
@@ -208,6 +245,11 @@ Exit
 		;; for a clean exit, the carry flag needs to be clear (and a)
 		call Bank.restore
 .nop
+		ld b, a					; put a somewhere
+.border equ $+1
+		ld a, SMC				; restore the user's border
+		ld (BORDCR), a
+		ld a, b
 .stack equ $+1
 		ld sp, SMC				; the original stack pointer is set here upon load
 		pop iy
@@ -219,6 +261,7 @@ Exit
 
 	INCLUDE "vars.asm"
 	INCLUDE "messages.asm"
+	INCLUDE "border.asm"
 	INCLUDE "esp-timeout.asm"
 	INCLUDE "uart.asm"
 	INCLUDE "wifi.asm"

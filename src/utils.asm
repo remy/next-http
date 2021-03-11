@@ -91,7 +91,7 @@ PrintRst16:
 ;     z flag reset (nz)
 StringToNumber16:
 	ld hl, 0				; init HL to zero
-ConvLoop:
+.convLoop:
 	ld a, (de)
 	and a
 	ret z					; null character exit
@@ -115,9 +115,9 @@ ConvLoop:
 
 	add a, l
 	ld l, a
-	jr nc, ConvLoop
+	jr nc, .convLoop
 	inc h
-	jr ConvLoop
+	jr .convLoop
 
 .error
 	scf

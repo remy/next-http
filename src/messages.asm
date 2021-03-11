@@ -14,6 +14,8 @@ bankError	DC "C Bank arg error"
 lengthError	DC "D Length arg error"
 offsetError	DC "E Offset arg error"
 portError	DC "F Port error"
+borderError	DC "G Border out of range 0-7"
+hostError	DC "H Host required"
 	ENDMODULE
 
 	MODULE Msg
@@ -33,8 +35,9 @@ help
 		DB "-l num*   length of data",CR
 		DB "          (required with POST)",CR
 		DB "-o num*   offset in bank",CR
-		DB "-7        base64 decode",CR,CR
+		DB "-7        base64 decode",CR
+		DB "-f num*   flash border colour",CR,CR
 		DB "* denotes optional with defaults",CR
-		DB "-> FAQ @ tinyurl.com/httpbank",CR,0
+		DB "FAQ: tinyurl.com/httpbank",CR,0
 
 	ENDMODULE

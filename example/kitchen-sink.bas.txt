@@ -67,7 +67,7 @@ CLS
 
 ; GET 7bit large
 ; http://data.remysharp.com/2 responds with binary 6912 bytes based encoded as 7-bit (so it's around 9217 bytes)
-; bank=5 host=h$ url=/2 offset=-0 (meaning 0 and don't erase bank) enable-7bit
-../httpbank get -b 5 -h h$ -u /2 -o -0 -7
+; bank=5 host=h$ url=/2 offset=-0 (meaning 0 and don't erase bank) enable-7bit flash 3 (magenta)
+../httpbank get -b 5 -h h$ -u /2 -o -0 -7 -f 3
 
 PAUSE 0

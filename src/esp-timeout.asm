@@ -26,9 +26,7 @@ Success:	pop af
 Failure:	ld hl, (Wifi.timeout)
 HandleError:
 		call Error 			; Ignore current stack depth, and just jump
-Stop:						; Not sure this is ever called
-		Border 2
-		jr Stop
+
 Rollover:
 Value2 	EQU $+1
 		ld hl, SMC			; Check the two upper values

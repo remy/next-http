@@ -54,6 +54,7 @@ init
 ; A <- result
 ; Modifies: BC
 read:
+		call Border
 		call InitESPTimeout
 		ld bc, UART_GetStatus
 .wait:
@@ -71,6 +72,7 @@ read:
 		ld (Bank.debug), hl
 		pop hl
 	ENDIF
+		call Border
 		ret
 .checkTimeout
 		call CheckESPTimeout
@@ -80,6 +82,7 @@ read:
 ; A = byte to write
 ; Modifies: BC, DE
 write:
+		call Border
 		call InitESPTimeout
 		ld d, a
 	IFDEF TESTING
@@ -98,6 +101,7 @@ write:
 		and UART_TX_BUSY
 		jr nz, .checkTimeout
 		out (c), d
+		call Border
 		ret
 
 .checkTimeout

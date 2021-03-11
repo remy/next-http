@@ -73,9 +73,11 @@ parseOption
 		cp 'u' : jr z, parseUrl
 		cp 'l' : jr z, parseLength
 		cp 'o' : jr z, parseOffset
+		cp 'f' : jr z, parseFlashBorder
 		jr parseError
-
 parse7bit:
+		;; lol, this is horrible...
+		;;
 		;; modify the code on the fly, and nop the jump that skips over
 		;; the 7-bit support. A little expensive at 111 cycles(!) but really
 		;; not a huge deal.
@@ -126,6 +128,8 @@ parsePort:	ld de, State.port : jr continueOption
 parseUrl:	ld de, State.url : jr continueOption
 parseLength:	ld de, State.length : jr continueOption
 parseOffset:	ld de, State.offset : jr continueOption
+parseFlashBorder:
+		ld de, State.border : jr continueOption
 
 
 readFromNextBASIC

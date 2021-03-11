@@ -7,8 +7,11 @@ This works best on small blocks of data. Requesting a 7K `.scr` does work, but h
 Usage:
 
 ```
+; Send 1024 bytes from bank 22 to http://192.168.1.100:8080/send
 .httpbank post -b 22 -l 1024 -h 192.168.1.100 -p 8080 -u /send
-.httpbank get -b 26 -h data.remysharp.com -u /1
+
+; Load http://data.remysharp.com/1 into bank 26 and flash border red (2)
+.httpbank get -b 26 -h data.remysharp.com -u /1 -f 2
 ```
 
 Options:
@@ -19,6 +22,7 @@ Options:
 - `-h` host address
 - `-p` port number (defaults to 80)
 - `-u` url (defaults to `/`)
+- `-f` flash the border to n 0-7 (defaults to no flashing) and restores original border on exit
 - `-7` enabled base64 decoding (useful for supporting [Cspect](http://cspect.org/) and 7-bit binary exchange*)
 
 Note that by default a GET request will empty out the bank selected. If you want to preserve the data in the bank, use a negative value for the offset, i.e. `-b 5 -o -0` will load the http request into bank 5, preserving the RAM and inserting at memory position 0 (in fact, `$4000` in RAM).
@@ -117,6 +121,8 @@ Then include the `httpbank-debug.bin` that was saved on  your Next to help debug
 - `D` Length arg error - must be a number
 - `E` Offset arg error - must be a number
 - `F` Port error - must be a number
+- `G` Border option error - must be a number between 0 and 7
+- `H` Hostname is required
 
 ## Development
 
