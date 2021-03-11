@@ -8,6 +8,7 @@ CLS
 ; http://data.remysharp.com/7bit-test responds with binary 6912 bytes encoded as 7-bit using base64
 ../httpbank-debug.dot get -b 20 -h data.remysharp.com -7 -u /2
 
+; esp-debug will include the response from the server but also the ESP data in the send half of the file
 SAVE "esp-debug.bin" BANK 20
 
 PAUSE 0
