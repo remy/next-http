@@ -77,11 +77,18 @@ parseOption
 
 parse7bit:
 		;; modify the code on the fly, and nop the jump that skips over
-		;; the 7-bit support. A little expensive at 8 cycles, but really
+		;; the 7-bit support. A little expensive at 111 cycles(!) but really
 		;; not a huge deal.
 		ld a, 0
+		ld (Post.check7bitSupport1), a
+		ld (Post.check7bitSupport1+1), a
+		ld (Post.check7bitSupport2), a
+		ld (Post.check7bitSupport2+1), a
 		ld (Wifi.getPacket.check7bitSupport), a
 		ld (Wifi.getPacket.check7bitSupport+1), a
+		ld (Wifi.tcpSendBuffer.check7bitSupport), a
+		ld (Wifi.tcpSendBuffer.check7bitSupport+1), a
+
 		jr startToken
 
 continueOption:

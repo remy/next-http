@@ -7,16 +7,16 @@
 CLS
 BANK 30 ERASE : BANK 31 ERASE
 
-h$="next.remysharp.com"
+h$="data.remysharp.com"
 b$="30"
 
 LOAD "httpbank.bas.txt" BANK 30
 PRINT "posting"
-../httpbank post -b b$ -h h$ -l 20
+../httpbank post -b b$ -h h$ -l 20 -u /1
 PRINT "done"
 PRINT "now getting"
-; http://next.remysharp.com/test-bytes responds with 256 bytes 0-$ff
-../httpbank get -h h$ -b 31 -o 100 -u /test-bytes : ; $3E
+; http://data.remysharp.com/test-bytes responds with 256 bytes 0-$ff
+../httpbank get -h h$ -b 31 -o 100 -u /3 : ; $3E
 PRINT "complete, reading substring:"
 
 ; peek from offset (100) + 48 (which is the start of numbers in ascii)

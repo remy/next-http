@@ -161,7 +161,6 @@ tcpSendBuffer:
 	ld (fail), hl
 	pop hl
 
-	CSP_BREAK
 	ld d, h
 	ld e, l
 	call StringLength
@@ -190,13 +189,73 @@ tcpSendBuffer:
 .sendBody
 	ld hl, (bufferPointer)					; now send the memory buffer
 	pop bc
+
+
+	;; IXH is used for tracking where we're up in the 3 byte buffer tracker
+	;; then we load Base64.input into DE and when E mod 4 === 3 then we
+	;; flush the buffer with individual calls to Uart.write
+	ld de, Base64.input
+
 .bodyLoop
+
+	;; TODO if base64, then create a buffer of 3 bytes, then once full
+	;; flush to base64 encoded and send all at once
 	ld a, (hl)
 
+
+.check7bitSupport
+	jr .no7bitSupport
+
+	; CSP_BREAK
+	;; here be 7-bit / base64 encoding support
+	ld (de), a
+	inc de
+	ld a, e
+	and 3
+	jr nz, .bufferNotFull
+
+	; CSP_BREAK
+
+	push hl
+	push bc
+
+	ld hl, Base64.input
+	call Base64.Encode
+
+	ex de, hl				; swap DE because HL isn't modifid in Uart.write
+	ld a, (hl)
+	call Uart.write
+	inc hl
+	ld a, (hl)
+	call Uart.write
+	inc hl
+	ld a, (hl)
+	call Uart.write
+	inc hl
+	ld a, (hl)
+	call Uart.write
+
+	pop bc
+
+	dec bc					; adjust for the 4 bytes we just
+	dec bc					; sent, and the fourth DEC BC call
+	dec bc					; happens before we jump bodyLoop
+
+	pop hl
+
+	ld de, Base64.input
+	jr .nextByte
+
+.bufferNotFull
+	inc bc					; reverse BC dec whilst we haven't flushed
+	jr .nextByte
+
+.no7bitSupport
 	push bc
 	call Uart.write
 	pop bc
 
+.nextByte
 	inc hl
 
 	dec bc

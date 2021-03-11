@@ -63,8 +63,8 @@ You can save the `httpbank` to your own `/dot` directory, or you can run it from
 
 ## Todo
 
-- [ ] Base64 encode in POST
 - [ ] Add server example code
+- [x] Base64 encode in POST
 - [x] Potentially reset esp if failing to respond (AT+RST)
 - [x] Test query string / quoting an argument, i.e. `-u /?a=z`
 - [x] base64 version should stream to a buffer

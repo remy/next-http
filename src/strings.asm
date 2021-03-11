@@ -7,7 +7,7 @@ post		DEFB "POST "
 host		DEFB "Host: "
 reqTail		DEFB " HTTP/1.1", CR, LF, "Connection: close", CR, LF
 reqTailLen	EQU $-reqTail
-postLength	DEFB "Content-Length: "
+postLength	DEFB "Content-Type: application/x-www-form-urlencoded", CR, LF, "Content-Length: "
 postLen		EQU $-reqTail
 
 	ENDMODULE

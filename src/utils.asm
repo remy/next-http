@@ -1,3 +1,58 @@
+; HL = number to ASCII
+; HL <- string buffer
+; Modifies: AF
+;
+; Number in hl to decimal ASCII
+; Thanks to z80 Bits
+; example: hl=300 outputs '00300'
+HLtoNumber:
+		ld a, l
+		or h
+		jr z, .zero
+		push hl
+		exx
+		pop hl
+
+		ld de, .buffer
+		call .hltoNumber
+
+		exx
+		ld hl, .buffer
+.trim						; trim leading '0'
+		ld a, (hl)
+		cp '0'
+		ret nz
+		inc hl
+		jr .trim
+
+.zero
+		ld a, '0'
+		ld (hl), a
+		ret
+
+.hltoNumber
+		ld	bc, -10000
+		call	.num1
+		ld	bc, -1000
+		call	.num1
+		ld	bc, -100
+		call	.num1
+		ld	c, -10
+		call	.num1
+		ld	c, -1
+.num1:
+		ld	a, '0'-1
+.num2:
+		inc	a
+		add	hl, bc
+		jr	c, .num2
+		sbc	hl, bc
+		ld (de), a
+		inc de
+
+		ret
+.buffer
+	DEFB "00000",0
 
 ; DE = pointer to string that's null terminated
 ; HL <- string length

@@ -4,7 +4,7 @@
 LAYER 0
 CLS
 
-; http://next.remysharp.com/7bit-test responds with binary 6912 bytes encoded as 7-bit using base64
-../httpbank get -b 5 -h next.remysharp.com -o -0 -u /test : ; $0a
+; http://data.remysharp.com/1 responds with binary 6912 bytes encoded as 8-bit
+../httpbank get -b 5 -h data.remysharp.com -o -0 -u /1 : ; $0a
 
 PAUSE 0

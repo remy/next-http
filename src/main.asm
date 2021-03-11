@@ -24,7 +24,7 @@ testStart:
 		ret
 testFakeArgumentsLine
 		;; test:
-		; DZ "post -b 20 -h 192.168.1.118 -p 8080 -l 20"
+		DZ "post -b 20 -h 192.168.1.118 -p 8080 -u /1 -l 1 -7" ; send 1 byte encoded
 		; DZ "get -h rbmtest.atwebpages.com -u /test.txt -b 20"
 		; DZ  "get -h 192.168.1.118 -p 8080 -u /7test -b 5 -o -0 -7"
 		; DZ  "get -h 192.168.1.118 -p 8080 -u /test-query?foo=bar -b 10"
@@ -109,27 +109,46 @@ Post
 		ld hl, State.url
 		call Headers.Url
 		call Headers.PostTrailer
+
+		; CSP_BREAK
 		ld hl, State.length
+.check7bitSupport1
+		jr .skipBase64EncodeLength1
+
+		push de
+		ld de, State.length
+		call StringToNumber16			; convert to numeric
+		call Base64.EncodedLength		; adjust length
+		call HLtoNumber
+		pop de
+.skipBase64EncodeLength1
 		call Headers.copyHLtoDE
+
+
 		call Headers.NewLine
 		ld hl, State.host
 		call Headers.Host
 		call Headers.EndPost
 
 		ld hl, requestBuffer
-		CSP_BREAK
 
 		ld de, State.offset			; load and prepare the offset
 		call StringToNumber16			; HL = offset
 		jr c, offsetError
 		ld bc, Bank.buffer			; BC is our starting point
-		add hl, bc				; then add the offset
+		add hl, bc				; then add the offsset
 		ld (Wifi.bufferPointer), hl		; and now data will be stored here.
 
 		ld de, State.length
 		call StringToNumber16
-		ld b, h : ld c, l			; load BC with out POST length
 
+		;; TODO if base64 increase length
+
+.check7bitSupport2
+		jr .skipBase64EncodeLength2
+		call Base64.EncodedLength
+.skipBase64EncodeLength2
+		ld b, h : ld c, l			; load BC with out POST length
 		ld hl, requestBuffer
 		call Wifi.tcpSendBuffer
 
@@ -207,7 +226,7 @@ Exit
 	INCLUDE "bank.asm"
 	INCLUDE "parse.asm"
 	INCLUDE "strings.asm"
-	INCLUDE "base64decode.asm"
+	INCLUDE "base64.asm"
 	INCLUDE "headers.asm"
 
 		;; NOTE even though the request buffer is 256, it sits at the end
