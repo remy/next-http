@@ -24,7 +24,7 @@ testStart:
 		ret
 testFakeArgumentsLine
 		;; test:
-		; DZ "post -b 20 -f 2 -h 192.168.1.118 -p 8080 -u /1 -l 1 -7" ; send 1 byte encoded
+		; DZ "post -b 20 -h data.remysharp.com -u /1 -l 256 -7" ; send 1 byte encoded
 		; DZ "get -h rbmtest.atwebpages.com -u /test.txt -b 20"
 		; DZ  "get -h 192.168.1.118 -p 8080 -u /7test -b 5 -o -0 -7"
 		; DZ  "get -h 192.168.1.118 -p 8080 -u /test-query?foo=bar -b 10"
@@ -146,7 +146,6 @@ Post
 		call Headers.Url
 		call Headers.PostTrailer
 
-		; CSP_BREAK
 		ld hl, State.length
 .check7bitSupport1
 		jr .skipBase64EncodeLength1

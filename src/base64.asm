@@ -30,10 +30,13 @@ result:
 
 ; HL = length of pre-encoded text
 ; HL <- result (HL / 3 * 4 rounded)
+; A <- padding
 ; Modifies: BC
 ;
 ; Returns the length required to encode a string of HL length
 EncodedLength
+		push de					; protect DE
+		push hl
 		ld c, 3					; start by dividing HL by 3
 		xor a
 		ld b, 16
@@ -63,8 +66,32 @@ EncodedLength
 		rl l					; and repeat
 		rl h
 
-		; ld b, 0
-		; add hl, bc				; add the remainder
+		;; now we need to work out what the padding is
+		;; and store this for when we deliver the a stream
+		pop bc					; BC is original value, HL is multiplied value
+		push hl
+
+		rr h					; HL / 4
+		rr l
+		rr h
+		rr l
+
+		ld d, h					; copy HL to DE
+		ld e, l
+
+		add hl, hl				; HL * 2
+		add hl, de				; HL + DE = (HL / 4) * 3
+
+		;; HL now contains estimated source length, now we substract
+		;; the original length stored in BC to work out how many
+		;; padding bytes we need
+		or a					; first clear the  carry
+		sbc hl, bc				; HL - BC (and the carry, but that's cleared)
+		ld a, l					; will be 0, 1 or 2
+		ld (State.padding), a			; squirrel away for later
+
+		pop hl					; HL is our base64 encoded length
+		pop de					; restore original DE
 
 		ret
 
@@ -76,6 +103,17 @@ encode64
 ; HL = pointer to 3 character buffer
 ; DE <- buffer with 4 bytes base64 encoded
 Encode
+		;; if carry, then the support padding
+		jp nc, .notAtEnd
+
+		;; modify out routine - don't worry, it won't be called again
+		push hl
+		ld hl, .withPaddingJump
+
+		ld (hl), .withPadding
+		pop hl
+
+.notAtEnd
 		ld a, (hl)				; chr 1
 		and %11111100
 		rra
@@ -109,6 +147,55 @@ Encode
 		ld a, (de)
 		ld (buffer+1), a			; save second value
 
+		;; FIXME this is wrong
+.withPaddingJump EQU $+1
+		jr $+1
+
+		ld a, (hl)				; chr 3
+		and %00001111				; take the lower nibble
+		rla
+		rla					; A = %00111100
+		ld d, a					; save for later
+		inc hl
+		ld a, (hl)
+		rlca
+		rlca					; rotate *through* carry twice
+		and %00000011				; then mask
+		or d
+
+		ld de, encode64
+		add de, a
+		ld a, (de)
+		ld (buffer+2), a			; save third value
+
+		ld a, (hl)				; chr 4
+
+		and %00111111
+		ld de, encode64
+		add de, a
+		ld a, (de)
+		ld (buffer+3), a			; save fouth value
+
+		jr .done
+
+.twoBytes:
+		ld hl, buffer+2
+		ld a, '='
+		ld (hl), a
+		inc hl
+		ld (hl), a
+		jr .done
+
+.threeBytes:
+		ld hl, buffer+3
+		ld a, '='
+		ld (hl), a
+.done
+		ld de, buffer
+		ret
+
+.withPadding EQU $-.withPaddingJump-1
+
 		ld a, (hl)				; chr 3
 		and a
 		jr z, .twoBytes
@@ -140,23 +227,6 @@ Encode
 		ld (buffer+3), a			; save fouth value
 
 		jr .done
-
-.twoBytes:
-		ld hl, buffer+2
-		ld a, '='
-		ld (hl), a
-		inc hl
-		ld (hl), a
-		jr .done
-
-.threeBytes:
-		ld hl, buffer+3
-		ld a, '='
-		ld (hl), a
-.done
-		ld de, buffer
-		ret
-
 ;; -----------------------------------------------------------------------------
 
 ; A = 7-bit byte value

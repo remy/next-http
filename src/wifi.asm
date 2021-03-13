@@ -202,7 +202,6 @@ tcpSendBuffer:
 	;; flush to base64 encoded and send all at once
 	ld a, (hl)
 
-
 .check7bitSupport
 	jr .no7bitSupport
 
@@ -219,6 +218,33 @@ tcpSendBuffer:
 	push hl
 	push bc
 
+	;; test value of bc here
+	or a					; clear carry
+
+	ld a, b
+	and a					; if B != 0 then skip
+	jp nz, .notAtEnd
+
+	ld a, c
+	cp 4
+	jp nz, .notAtEnd
+
+	ld a, (State.padding)
+	and a
+	jr z, .padNone
+
+	cp 2
+	jr nz, .padOne
+	xor a
+	ld (Base64.input+2), a
+.padOne
+	xor a
+	ld (Base64.input+1), a
+
+.padNone
+	scf					; set carry as a flag for encode process
+
+.notAtEnd
 	ld hl, Base64.input
 	call Base64.Encode
 
