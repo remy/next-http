@@ -156,9 +156,7 @@ tcpSendBuffer:
 	;; setup the custom error types
 	push hl
 	ld hl, Err.tcpSend1
-	ld (error), hl
-	ld hl, Err.tcpSend2
-	ld (fail), hl
+	ld (timeout), hl
 	pop hl
 
 	ld d, h
@@ -171,6 +169,15 @@ tcpSendBuffer:
 
 	push hl						; HL = length of sending body
 
+	;; TODO break in to 2K chunks
+
+	; ld a, h
+	; cp 8
+	; jr c, .startSend
+
+	;; else - break into chunks
+
+.startSend
 	EspSend "AT+CIPSEND="
 
 	pop hl
@@ -181,7 +188,11 @@ tcpSendBuffer:
 	call Uart.read : cp '>' : jr nz, .wait
 	pop hl
 .headerLoop
-	ld a, (hl) : and a : jr z, .sendBody
+	;; now send each header line no encoding required, and repeat until
+	;; we hit a null terminator
+	ld a, (hl)
+	and a
+	jr z, .sendBody
 	call Uart.write
 	inc hl
 	jp .headerLoop
@@ -303,9 +314,7 @@ tcpSendString:
 
 	;; setup the custom error types
 	ld hl, Err.tcpSend3
-	ld (error), hl
-	ld hl, Err.tcpSend4
-	ld (fail), hl
+	ld (timeout), hl
 
 	EspSend "AT+CIPSEND="
 	pop de : push de
