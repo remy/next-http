@@ -193,6 +193,12 @@ Encode
 		ld de, buffer
 		ret
 
+; Modifies: A
+.reset
+		ld a, $ff
+		ld (.SMC_withPaddingJump), a
+		ret
+
 .withPadding EQU $-.SMC_withPaddingJump-1
 
 		ld a, (hl)				; chr 3

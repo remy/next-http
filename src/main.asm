@@ -27,7 +27,8 @@ testFakeArgumentsLine
 		; DZ "post -b 21 -h data.remysharp.com -u /1 -f 3 -l 2048"
 		; DZ "post -b 21 -h data.remysharp.com -u /1 -f 3 -l 5000"
 		; DZ "post -b 21 -h data.remysharp.com -u /1 -f 4 -l 5000 -7"
-		DZ "get -b 5 -h data.remysharp.com -u /5 -o -0 -f 3"
+		; DZ "get -b 5 -h data.remysharp.com -u /5 -o -0 -f 3"
+		; DZ "post -b 21 -h data.remysharp.com -u /1 -f 3 -l 16384 -7"
 
 	ENDIF
 
@@ -205,20 +206,12 @@ Post
 .startSend
 .SMC_sendPostMethod EQU $+1
 		call Wifi.tcpSendBufferFrame		; swapped for Wifi.tcpSendEncodedBufferFrame in 7bit
-		pop bc
-		push bc
 
-		;; this can't adjust HL when in 7bit mode, we need to adjust for just a part of
-		ld c, 0
-.SMC_chunk0 EQU $+1
-		ld b, 8
-		or a					; clear carry so it's not included in ADC
-		adc hl, bc				; HL = HL + BC
-		ld (Wifi.bufferPointer), hl
+		call Base64.Encode.reset		; reset the padding logic
 
 		pop bc
 
-		ld a, b
+		ld a, b					; if first send < 2K then we're done
 		cp 8
 		jr c, .finishSend
 
@@ -227,7 +220,10 @@ Post
 		sub 8
 		ld b, a
 
-		jr .bufferFrameLoop
+		;; check if the original message was exactly on the 2K edge
+		or c
+
+		jr nz, .bufferFrameLoop
 
 .finishSend
 		jr LoadPackets				; ensure we drain the ESP

@@ -202,6 +202,7 @@ tcpSendEncodedBufferFrame:
 	cp 4
 	jp nz, .sendEncodedBuffer		; only apply padding *right* at the end
 
+	; CSP_BREAK
 	;; work out how much padding is required now we're at the end
 	ld a, (State.padding)
 	and a
@@ -294,7 +295,8 @@ tcpSendBufferFrame:
 
 ; HL = string to send
 ; Modifies: AF, BC, DE
-; Sends the contents of HL to ESP (auto adding the CR+LF to the message)
+; Sends the contents of HL up to null terminator to ESP,
+; auto adding the CR+LF to the message
 tcpSendString:
 	push hl
 
@@ -313,7 +315,9 @@ tcpSendString:
 	call Uart.read : cp '>' : jr nz, .wait
 	pop hl
 .loop
-	ld a, (hl) : and a : jr z, .exit
+	ld a, (hl)
+	and a
+	jr z, .exit
 	call Uart.write
 	inc hl
 	jp .loop

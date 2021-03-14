@@ -99,8 +99,6 @@ parse7bit:
 
 		pop hl
 
-		ld a, 6
-		ld (Post.SMC_chunk0), a
 		jr startToken
 
 continueOption:
