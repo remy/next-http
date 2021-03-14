@@ -106,6 +106,16 @@ Encode
 		;; if carry, then the support padding
 		jp nc, .notAtEnd
 
+		;; if there IS carry, then we want to add padding, but let's
+		;; first check the state padding, because sometimes I'm coming
+		;; into this call with a carry, and we're not actually at the
+		;; very end of the stream. I suspect a bug in the logic somewhere
+		;; but this extra check should get me out of jail and prevent
+		;; the logic.
+		ld a, (State.padding);
+		and a
+		jr z, .notAtEnd				; not stritly true, but might also mean no padding required
+
 		;; modify out routine - don't worry, it won't be called again
 		push hl
 		ld hl, .SMC_withPaddingJump
