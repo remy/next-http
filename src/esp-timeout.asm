@@ -9,6 +9,7 @@ InitESPTimeout:
 		ret
 	ENDMODULE
 
+; Modifies: nothing
 CheckESPTimeout:
 	MODULE CheckESPTimeout
 		push hl

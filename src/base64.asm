@@ -88,7 +88,7 @@ EncodedLength
 		or a					; first clear the  carry
 		sbc hl, bc				; HL - BC (and the carry, but that's cleared)
 		ld a, l					; will be 0, 1 or 2
-		ld (State.padding), a			; squirrel away for later
+		ld (State.paddingReal), a		; squirrel away for later
 
 		pop hl					; HL is our base64 encoded length
 		pop de					; restore original DE
@@ -108,7 +108,7 @@ Encode
 
 		;; modify out routine - don't worry, it won't be called again
 		push hl
-		ld hl, .withPaddingJump
+		ld hl, .SMC_withPaddingJump
 
 		ld (hl), .withPadding
 		pop hl
@@ -147,8 +147,7 @@ Encode
 		ld a, (de)
 		ld (buffer+1), a			; save second value
 
-		;; FIXME this is wrong
-.withPaddingJump EQU $+1
+.SMC_withPaddingJump EQU $+1
 		jr $+1
 
 		ld a, (hl)				; chr 3
@@ -194,7 +193,7 @@ Encode
 		ld de, buffer
 		ret
 
-.withPadding EQU $-.withPaddingJump-1
+.withPadding EQU $-.SMC_withPaddingJump-1
 
 		ld a, (hl)				; chr 3
 		and a

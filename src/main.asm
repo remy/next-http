@@ -24,13 +24,10 @@ testStart:
 		ret
 testFakeArgumentsLine
 		;; test:
-		; DZ "post -b 20 -h data.remysharp.com -u /1 -l 256 -7" ; send 1 byte encoded
-		; DZ "get -h rbmtest.atwebpages.com -u /test.txt -b 20"
-		; DZ  "get -h 192.168.1.118 -p 8080 -u /7test -b 5 -o -0 -7"
-		; DZ  "get -h 192.168.1.118 -p 8080 -u /test-query?foo=bar -b 10"
-		; DZ  "get -b 5 -h data.remysharp.com -f 2 -u /2 -o -0 -7"
-		; DZ  "get -h remy-testing.000webhostapp.com -b 20"
-		; DZ  "get -b 5 -h remy-testing.000webhostapp.com -o -0 -7"
+		; DZ "post -b 21 -h data.remysharp.com -u /1 -f 3 -l 2048"
+		; DZ "post -b 21 -h data.remysharp.com -u /1 -f 3 -l 5000"
+		; DZ "post -b 21 -h data.remysharp.com -u /1 -f 4 -l 5000 -7"
+		DZ "get -b 5 -h data.remysharp.com -u /5 -o -0 -f 3"
 
 	ENDIF
 
@@ -119,7 +116,8 @@ init:
 		;; if type = 0 => get, = 1 => post, else ¯\_(ツ)_/¯
 		ld a, (State.type)
 		ld (Wifi.skipReply), a			; if GET then clear the banks and make sure not to skip the content
-		and a : jr z, Get
+		and a
+		jp z, Get
 		jr Post
 
 hostError:
@@ -147,7 +145,7 @@ Post
 		call Headers.PostTrailer
 
 		ld hl, State.length
-.check7bitSupport1
+.SMC_check7bitSupport1
 		jr .skipBase64EncodeLength1
 
 		push de
@@ -159,35 +157,79 @@ Post
 .skipBase64EncodeLength1
 		call Headers.copyHLtoDE
 
-
 		call Headers.NewLine
 		ld hl, State.host
 		call Headers.Host
 		call Headers.EndPost
 
+		;; send headers then start on body which may be in chunks
+		ld de, requestBuffer
+		call StringLength
+		ld b, h
+		ld c, l
 		ld hl, requestBuffer
 
+		call Wifi.tcpSendBufferFrame
+
+		;; now send the bank broken down in to chunks of
+		;; 2048 for 8bit and 1536 for 7bit (to allow for encoding)
 		ld de, State.offset			; load and prepare the offset
 		call StringToNumber16			; HL = offset
 		jr c, offsetError
 		ld bc, Bank.buffer			; BC is our starting point
-		add hl, bc				; then add the offsset
+		add hl, bc				; then add the offset
 		ld (Wifi.bufferPointer), hl		; and now data will be stored here.
 
 		ld de, State.length
 		call StringToNumber16
 		jr c, lengthError
 
-		;; TODO if base64 increase length
-
-.check7bitSupport2
+.SMC_check7bitSupport2
 		jr .skipBase64EncodeLength2
 		call Base64.EncodedLength
+
 .skipBase64EncodeLength2
 		ld b, h : ld c, l			; load BC with out POST length
-		ld hl, requestBuffer
-		call Wifi.tcpSendBuffer
+		ld hl, (Wifi.bufferPointer)
 
+.bufferFrameLoop
+		push bc
+		ld a, b
+		cp 8
+		jr c, .assignPaddingValue		; < 2048
+		ld bc, $800
+		jr .startSend
+.assignPaddingValue
+		ld a, (State.paddingReal)
+		ld (State.padding), a
+.startSend
+.SMC_sendPostMethod EQU $+1
+		call Wifi.tcpSendBufferFrame		; swapped for Wifi.tcpSendEncodedBufferFrame in 7bit
+		pop bc
+		push bc
+
+		;; this can't adjust HL when in 7bit mode, we need to adjust for just a part of
+		ld c, 0
+.SMC_chunk0 EQU $+1
+		ld b, 8
+		or a					; clear carry so it's not included in ADC
+		adc hl, bc				; HL = HL + BC
+		ld (Wifi.bufferPointer), hl
+
+		pop bc
+
+		ld a, b
+		cp 8
+		jr c, .finishSend
+
+		;; subtract 2K, increment HL and loop
+		ld a, b
+		sub 8
+		ld b, a
+
+		jr .bufferFrameLoop
+
+.finishSend
 		jr LoadPackets				; ensure we drain the ESP
 
 Get
@@ -240,7 +282,6 @@ Error
 		scf					; Exit Fc=1
 
 Exit
-		; CSP_BREAK
 		;; for a clean exit, the carry flag needs to be clear (and a)
 		call Bank.restore
 .nop

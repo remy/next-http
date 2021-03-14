@@ -78,9 +78,10 @@ read:
 		call CheckESPTimeout
 		jr .wait
 
-; Write single byte to UART
 ; A = byte to write
 ; Modifies: BC, DE
+;
+; Write single byte to UART
 write:
 		call Border
 		call InitESPTimeout

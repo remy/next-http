@@ -1,8 +1,8 @@
-; Author: Alexander Sharikhin nihirash
+; Origial source author: Alexander Sharikhin nihirash
 ; License: https://github.com/nihirash/internet-nextplorer/blob/89baa64d974e2d916862280a9ec2f52247923172/LICENSE
 ; By them a coffee :-)
 ;
-; Includes modifications specific to the httpbank dot command by Remy Sharp
+; Includes A LOT of modifications specific to the httpbank dot command by Remy Sharp
 
     MODULE Wifi
 bytesAvail DW 0
@@ -121,9 +121,10 @@ flushToLF
 	cp 10 : jr nz, flushToLF
 	ret
 
+; HL = buff
+; E = count
+;
 ; Send buffer to UART
-; HL - buff
-; E - count
 espSend:
 	ld a, (hl) : call Uart.write
 	inc hl
@@ -131,7 +132,8 @@ espSend:
 	jr nz, espSend
 	ret
 
-; HL - string that ends with one of the terminator(CR/LF/TAB/NULL)
+; HL = string that ends with one of the terminator(CR/LF/TAB/NULL)
+; Modifies: AF, BC, DE
 espSendT:
 	ld a, (hl)
 
@@ -149,82 +151,42 @@ espSendT:
 ; Modifies: AF, BC, DE, HL
 ;
 ; Then sends pointer at DE plus the contents of Bank.buffer
-tcpSendBuffer:
-	push bc						; BC will be popped when in .sendBody
-	push hl						; strLen will overwrite HL
-
-	;; setup the custom error types
+tcpSendEncodedBufferFrame:
 	push hl
-	ld hl, Err.tcpSend1
+	push bc
+	;; setup the custom error types
+	ld hl, Err.tcpSend2
 	ld (timeout), hl
-	pop hl
+	ld hl, Err.tcpSend4
+	ld (error), hl
 
-	ld d, h
-	ld e, l
-	call StringLength
-	inc hl : inc hl ; +CRLF
-
-	;; now add the length of data being sent
-	add hl, bc
-
-	push hl						; HL = length of sending body
-
-	;; TODO break in to 2K chunks
-
-	; ld a, h
-	; cp 8
-	; jr c, .startSend
-
-	;; else - break into chunks
-
-.startSend
 	EspSend "AT+CIPSEND="
-
 	pop hl
+	push hl
 	call hlToNumEsp
 	ld a, 13 : call Uart.write
 	ld a, 10 : call Uart.write
+
 .wait
 	call Uart.read : cp '>' : jr nz, .wait
-	pop hl
-.headerLoop
-	;; now send each header line no encoding required, and repeat until
-	;; we hit a null terminator
-	ld a, (hl)
-	and a
-	jr z, .sendBody
-	call Uart.write
-	inc hl
-	jp .headerLoop
 
-.sendBody
-	ld hl, (bufferPointer)					; now send the memory buffer
 	pop bc
+	pop hl
 
-
-	;; IXH is used for tracking where we're up in the 3 byte buffer tracker
-	;; then we load Base64.input into DE and when E mod 4 === 3 then we
-	;; flush the buffer with individual calls to Uart.write
 	ld de, Base64.input
 
 .bodyLoop
 
-	;; TODO if base64, then create a buffer of 3 bytes, then once full
+	;; For base64 encode create a buffer of 3 bytes, then once full
 	;; flush to base64 encoded and send all at once
 	ld a, (hl)
 
-.check7bitSupport
-	jr .no7bitSupport
-
-	; CSP_BREAK
 	;; here be 7-bit / base64 encoding support
 	ld (de), a
 	inc de
 	ld a, e
 	and 3
-	jr nz, .bufferNotFull
-
-	; CSP_BREAK
+	jr nz, .nextByte
 
 	push hl
 	push bc
@@ -234,12 +196,13 @@ tcpSendBuffer:
 
 	ld a, b
 	and a					; if B != 0 then skip
-	jp nz, .notAtEnd
+	jp nz, .sendEncodedBuffer
 
 	ld a, c
 	cp 4
-	jp nz, .notAtEnd
+	jp nz, .sendEncodedBuffer		; only apply padding *right* at the end
 
+	;; work out how much padding is required now we're at the end
 	ld a, (State.padding)
 	and a
 	jr z, .padNone
@@ -255,7 +218,7 @@ tcpSendBuffer:
 .padNone
 	scf					; set carry as a flag for encode process
 
-.notAtEnd
+.sendEncodedBuffer
 	ld hl, Base64.input
 	call Base64.Encode
 
@@ -274,35 +237,58 @@ tcpSendBuffer:
 
 	pop bc
 
-	dec bc					; adjust for the 4 bytes we just
-	dec bc					; sent, and the fourth DEC BC call
-	dec bc					; happens before we jump bodyLoop
+	dec bc					; adjust for the 4 bytes we just send
+	dec bc
+	dec bc
+	dec bc
 
 	pop hl
 
-	ld de, Base64.input
-	jr .nextByte
+	ld de, Base64.input			; reset the position of the encode buffer
 
-.bufferNotFull
-	inc bc					; reverse BC dec whilst we haven't flushed
-	jr .nextByte
+.nextByte
+	inc hl
+	ld a, b
+	or c
+	jr nz, .bodyLoop
+	jp checkOkErr
 
-.no7bitSupport
+
+; HL = string to send
+; BC = length
+; Modifies: AF, BC, DE
+; Sends the contents of HL to ESP - to close out the connection, the sequence CR LF, CR, LF is required
+tcpSendBufferFrame:
+	push hl
+	push bc
+	;; setup the custom error types
+	ld hl, Err.tcpSend2
+	ld (timeout), hl
+	ld hl, Err.tcpSend4
+	ld (error), hl
+
+	EspSend "AT+CIPSEND="
+	pop hl
+	push hl
+	call hlToNumEsp
+	ld a, 13 : call Uart.write
+	ld a, 10 : call Uart.write
+
+.wait
+	call Uart.read : cp '>' : jr nz, .wait
+	pop bc
+	pop hl
+.writeLoop
+	ld a, (hl)
 	push bc
 	call Uart.write
 	pop bc
-
-.nextByte
 	inc hl
 
 	dec bc
 	ld a, b
 	or c
-	jr nz, .bodyLoop
-
-.exit
-	ld a, 13 : call Uart.write
-	ld a, 10 : call Uart.write
+	jr nz, .writeLoop
 	jp checkOkErr
 
 
@@ -442,7 +428,7 @@ getPacket:
 	call Uart.read
 	pop bc
 
-.check7bitSupport				; this opcode (JR nn) gets replaced if we're 7bit
+.SMC_check7bitSupport				; this opcode (JR nn) gets replaced if we're 7bit
 	jr .no7bitSupport
 
 	;; here be 7-bit / base64 decode support
@@ -532,8 +518,9 @@ getPacket:
 	add hl,bc
 	jr .cil1
 
+; HL = number
+; Modifies: AF, BC
 ; Based on: https://wikiti.brandonw.net/index.php?title=Z80_Routines:Other:DispHL
-; HL - number
 ; It will be written to UART
 hlToNumEsp:
 	ld	bc,-10000

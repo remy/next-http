@@ -67,9 +67,10 @@ You can save the `httpbank` to your own `/dot` directory, or you can run it from
 
 ## Todo
 
-- [ ] Chunk sending - real esp can't handle more than 2048 chunks
 - [ ] Zero post?
 - [ ] Add server example code
+- [x] base64 chunk sending
+- [x] Chunk sending - real esp can't handle more than 2048 chunks
 - [x] Base64 encode in POST
 - [x] Potentially reset esp if failing to respond (AT+RST)
 - [x] Test query string / quoting an argument, i.e. `-u /?a=z`

@@ -12,6 +12,7 @@ offset		DEFB "0",0			; < 16384 (and in theory length + limit must be less than 1
 border		DB $ff,0			; $FF means no border flashing
 		DS 4				; some safety padding though I should really have better validation
 padding		DB 0
+paddingReal	DB 0
 	DISPLAY "Host @ ",/H,$
 port		DB "80",0			; < 999999 port
 		DS 4

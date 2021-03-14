@@ -60,6 +60,13 @@ PRINT r$
 PRINT ''"Those bytes are encoded into a"
 PRINT "7bit compatible stream using"
 PRINT "base64 encoding & auto decoding"
+
+PRINT '"Now multi-packet + flash border"
+PRINT '"Ready?"
+PAUSE 0
+../httpbank post -b 5 -h h$ -u /1 -l 6912 -f 2
+
+PRINT '"A packet is 2K, we just sent 6k!"
 PRINT '"Ready for the last web demo?"
 
 PAUSE 0

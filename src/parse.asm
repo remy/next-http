@@ -82,15 +82,25 @@ parse7bit:
 		;; the 7-bit support. A little expensive at 111 cycles(!) but really
 		;; not a huge deal.
 		ld a, 0
-		ld (Post.check7bitSupport1), a
-		ld (Post.check7bitSupport1+1), a
-		ld (Post.check7bitSupport2), a
-		ld (Post.check7bitSupport2+1), a
-		ld (Wifi.getPacket.check7bitSupport), a
-		ld (Wifi.getPacket.check7bitSupport+1), a
-		ld (Wifi.tcpSendBuffer.check7bitSupport), a
-		ld (Wifi.tcpSendBuffer.check7bitSupport+1), a
+		ld (Post.SMC_check7bitSupport1), a
+		ld (Post.SMC_check7bitSupport1+1), a
+		ld (Post.SMC_check7bitSupport2), a
+		ld (Post.SMC_check7bitSupport2+1), a
+		ld (Wifi.getPacket.SMC_check7bitSupport), a
+		ld (Wifi.getPacket.SMC_check7bitSupport+1), a
 
+		push hl
+
+		ld hl, Wifi.tcpSendEncodedBufferFrame
+		ld a, l
+		ld (Post.SMC_sendPostMethod), a
+		ld a, h
+		ld (Post.SMC_sendPostMethod+1), a
+
+		pop hl
+
+		ld a, 6
+		ld (Post.SMC_chunk0), a
 		jr startToken
 
 continueOption:
