@@ -106,6 +106,13 @@ If you need to file an issue, this information is extremely valuable for debuggi
 
 Then include the `httpbank-debug.bin` that was saved on  your Next to help debug the issue.
 
+### Notes on httpbank-debug.dot
+
+1. Does not erase the bank
+2. The contents of the `State` structure (in `vars.asm`) are written to the 2nd half of the bank, i.e. the second 8K MMU
+3. After the `State` object, around 519 bytes later, the ESP exchange are stored, including the AT commands and ESP raw response.
+4. `Wifi.getPacket` writes to the end of the bank with the `IX` register state as a stack like array - this is to debug the final parsing of the base64 encoded packet
+
 ## Error codes
 
 - `1` WiFi/server timeout - no ESP available or can't start communication
@@ -116,8 +123,8 @@ Then include the `httpbank-debug.bin` that was saved on  your Next to help debug
 - `6` WiFi chip init failed - initialisation error
 - `7` HTTP send fail - POST connect error
 - `8` HTTP send fail - POST response fail
-- `9` HTTP send fail - GET connect error
-- `A` HTTP send fail - GET response fail
+- `9` HTTP get fail - GET connect error
+- `A` HTTP send tcp frame fail - POST read error
 - `B` HTTP read timeout
 - `C` Bank arg error - bank is required and must be a number
 - `D` Length arg error - must be a number
