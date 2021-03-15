@@ -55,6 +55,10 @@ Note that `httpbank` will expect a BASIC variable to represent a single argument
 
 You can save the `httpbank` to your own `/dot` directory, or you can run it from your working directory using a relative path `../httpbank`.
 
+## Example servers
+
+I've written a number of [example servers](https://github.com/remy/next-httpbank/tree/main/example/servers) in different languages for you to try out.
+
 ## Limits
 
 - When using a domain name, I've found that `CNAME` records can result in `DNS Error` so make sure to use `A` records ideally - you'll see error `2`.
@@ -65,30 +69,9 @@ You can save the `httpbank` to your own `/dot` directory, or you can run it from
 - I've noticed when using Cspect's emulation, if the host can't be reached, Cspect will hang entirely.
 - When using the `offset` you are constrained to 16K, so if the offset is 8,192, then the max length is also 8,192 (there's no error checking on this currently)
 
-## Todo
-
-- [ ] Zero post?
-- [ ] Add server example code
-- [x] base64 chunk sending
-- [x] Chunk sending - real esp can't handle more than 2048 chunks
-- [x] Base64 encode in POST
-- [x] Potentially reset esp if failing to respond (AT+RST)
-- [x] Test query string / quoting an argument, i.e. `-u /?a=z`
-- [x] base64 version should stream to a buffer
-- [x] Add support to leave bank untouched on GET
-- [x] Thorough check of argument processing
-- [x] Support offset
-- [x] Number and document errors
-- [x] Explore cspect (without additional hardware)
-- [x] Surface DNS error
-- [x] Timeout on esp comms
-- [x] Support NextBASIC variables in the args, i.e. `-b a$`
-- [x] Test calling from NextBASIC (with trailing comment)
-- [x] Check POST or GET for > 512 bytes
-
 ## Not supported / future
 
-- Chunked encoding
+- http chunked encoding (just make sure your server isn't sending chunked encoding)
 - Support length on GET
 
 ## Debugging and problems
