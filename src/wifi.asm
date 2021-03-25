@@ -391,6 +391,14 @@ getPacket:
 	ld b, d					; load DE (back) into BC
 	ld c, e
 
+	;; check if the header was all we got in the IPD request
+	ld a, b
+	or c
+	jr nz, .headerProcessedContinue
+	ld (bufferPointer), hl
+	ret
+
+.headerProcessedContinue
 	;; NOTE: IXH is used for tracking the buffer offset, in case we exit
 	;; this routine and come back in half way through a base64 decoding
 	;; process.
@@ -436,7 +444,6 @@ getPacket:
 	jr .no7bitSupport
 
 	;; here be 7-bit / base64 decode support
-
 	ld (de), a
 	cp '='
 	jr nz, .skipPadding
