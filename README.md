@@ -55,6 +55,8 @@ Note that `httpbank` will expect a BASIC variable to represent a single argument
 
 You can save the `httpbank` to your own `/dot` directory, or you can run it from your working directory using a relative path `../httpbank`.
 
+**Download the latest [release here](https://github.com/remy/next-httpbank/releases)**
+
 ## Example servers
 
 I've written a number of [example servers](https://github.com/remy/next-httpbank/tree/main/example/servers) in different languages for you to try out.
@@ -92,7 +94,7 @@ Then include the `httpbank-debug.bin` that was saved on  your Next to help debug
 ### Notes on httpbank-debug.dot
 
 1. Does not erase the bank
-2. The contents of the `State` structure (in `vars.asm`) are written to the 2nd half of the bank, i.e. the second 8K MMU
+2. The contents of the `State` structure (in `state.asm`) are written to the 2nd half of the bank, i.e. the second 8K MMU
 3. After the `State` object, around 519 bytes later, the ESP exchange are stored, including the AT commands and ESP raw response.
 4. `Wifi.getPacket` writes to the end of the bank with the `IX` register state as a stack like array - this is to debug the final parsing of the base64 encoded packet
 
