@@ -3,6 +3,14 @@
 currentOption:	DW 0
 showHelp:
 		ld hl, Msg.help
+		;; I need to restore the original stack here because I can't have
+		;; the SP in the range of $0000-$3FFF - it'll get wiped during RST $10
+		;; and since we're going to exit right after this *and* restore
+		;; the stack (again), this is totally fine. The place to be
+		;; careful is if I wanted to print anything else - then I'd more
+		;; likely need to reserve a bank, load it into an MMU and then
+		;; stick the stack there.
+		ld sp, (Exit.stack)
 		call PrintRst16
 		and a					; Exit Fc=0
 		jp Exit.nop
@@ -19,7 +27,6 @@ doPost:
 		jr Parse.startToken
 
 parseError:
-		pop af
 		ld hl, Err.badOption
 		xor a					; set A = 0
 		scf					; Exit Fc=1

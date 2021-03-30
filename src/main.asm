@@ -24,10 +24,11 @@ testStart:
 		ret
 testFakeArgumentsLine
 		;; test:
+		; DZ "get -b 20 -h 192.168.1.118 -p 8000 -u /demo.txt"
 		; DZ "post -b 21 -h data.remysharp.com -u /1 -f 3 -l 2048"
 		; DZ "post -b 21 -h data.remysharp.com -u /1 -f 3 -l 5000"
 		; DZ "post -b 21 -h data.remysharp.com -u /1 -f 4 -l 5000 -7"
-		; DZ "get -b 5 -h data.remysharp.com -u /5 -o -0 -f 3"
+		; DZ "get -b 5 -h data.remysharp.com -u /2 -7 -o -0 -f 3"
 		; DZ "post -b 21 -h data.remysharp.com -u /1 -f 3 -l 16384 -7"
 
 	ENDIF
@@ -47,7 +48,8 @@ init:
 		ld ixl, 0				; IXL is being used to track the padding length
 		ld ixh, 0
 
-		ld (Exit.stack), sp			; set my own stack so I can use $e000-$ffff
+		ld (Exit.stack), sp			; set my own stack so this dot command can be called
+		ld sp, stackTop				; from other projects
 
 		ld a, (BORDCR)				; save SYSB the border for restore later
 		ld (Exit.border), a
@@ -282,20 +284,20 @@ Exit
 		call Bank.restore
 .nop
 		ld b, a					; put a somewhere
-.border equ $+1
+.border EQU $+1
 		ld a, SMC				; restore the user's border
 		ld (BORDCR), a
 		ld a, b
-.stack equ $+1
+.stack EQU $+1
 		ld sp, SMC				; the original stack pointer is set here upon load
 		pop iy
 		pop ix
-.cpu equ $+3:
+.cpu EQU $+3:
 		nextreg CPUSpeed, SMC       		; Restore original CPU speed
 		ei
 		ret
 
-	INCLUDE "vars.asm"
+	INCLUDE "state.asm"
 	INCLUDE "messages.asm"
 	INCLUDE "border.asm"
 	INCLUDE "esp-timeout.asm"
@@ -308,10 +310,16 @@ Exit
 	INCLUDE "base64.asm"
 	INCLUDE "headers.asm"
 
+stack
+	DS  $80, $AA    ; $AA is just debug filler of stack area
+stackTop EQU $
+	DISPLAY "Stack @ ",/H,$
+
 		;; NOTE even though the request buffer is 256, it sits at the end
 		;; of our program in memory, and this currently is well under the
 		;; 8K limit of a dot file.
 requestBuffer	BLOCK 256				; Request buffer is only used for the POST headers, not the body
+
 last
 
 diagBinSz   	EQU last-start
@@ -329,7 +337,7 @@ diagBinPcLo 	EQU ((100*diagBinSz)%8192)*10/8192
 		DEFINE LAUNCH_CSPECT
 
 		IFDEF LAUNCH_CSPECT : IF ((_ERRORS = 0) && (_WARNINGS = 0))
-			;; delete any autoexec ba
+			;; delete any autoexec.bas
 			SHELLEXEC "(hdfmonkey rm /Applications/cspect/app/cspect-next-2gb.img /nextzxos/autoexec.bas > /dev/null) || exit 0"
 			SHELLEXEC "hdfmonkey put /Applications/cspect/app/cspect-next-2gb.img httpbank-debug.dot /devel/httpbank.dot"
 			SHELLEXEC "mono /Applications/cspect/app/cspect.exe -r -w5 -basickeys -zxnext -nextrom -exit -brk -tv -mmc=/Applications/cspect/app/cspect-next-2gb.img -map=./httpbank.map"
