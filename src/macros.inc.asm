@@ -10,24 +10,6 @@ PrintChar MACRO
 	ENDM
 
 
-PrintMsg MACRO Address
-		ld 	hl, Address
-		call 	PrintRst16
-	ENDM
-
-PrintText MACRO Text
-		push 	hl
-		ld 	hl, .txt
-		call 	PrintRst16
-		pop	hl
-		jr 	.txtE
-.txt
-		DB Text
-		DB CR
-		DB 0
-.txtE
-	ENDM
-
 
 ErrorIfNoCarry MACRO ErrAddr
 		jp 	c, .Continue
