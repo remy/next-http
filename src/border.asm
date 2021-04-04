@@ -28,3 +28,10 @@ Border:
 		and a, %00000111		; mask the rest
 		ld (Border.userColour), a
 		ret
+
+.Restore
+		ex af, af'
+		ld a, (Border.userColour)
+		out (254), a
+		ex af, af'
+		ret

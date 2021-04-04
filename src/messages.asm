@@ -16,6 +16,8 @@ offsetError	DC "E Offset arg error"
 portError	DC "F Port error"
 borderError	DC "G Border out of range 0-7"
 hostError	DC "H Host required"
+noFileOrBank	DC "I Filename or bank must be specified"
+fileOpen	DC "J Could not open file for writing"
 	ENDMODULE
 
 	MODULE Msg
@@ -23,12 +25,13 @@ hostError	DC "H Host required"
 help
 		;;  12345678901234567890123456789012
 		DB NAME, " v", VERSION, " by Remy Sharp", CR
-		DB "-> GET and POST to a bank", CR, CR
+		DB "-> GET and POST over http", CR, CR
 		DB "Synopsis:",CR
 		DB " .",NAME," get ...args",CR
 		DB " .",NAME," post ...args",CR, CR
 		DB "Args:",CR
-		DB "-b num    bank to use",CR
+		DB "-b num*   bank to use",CR
+		DB "-f str*   filename",CR
 		DB "-h str    host address",CR
 		DB "-p num*   port",CR
 		DB "-u str*   url",CR

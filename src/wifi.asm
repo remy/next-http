@@ -2,7 +2,7 @@
 ; License: https://github.com/nihirash/internet-nextplorer/blob/89baa64d974e2d916862280a9ec2f52247923172/LICENSE
 ; By them a coffee :-)
 ;
-; Includes A LOT of modifications specific to the httpbank dot command by Remy Sharp
+; Includes A LOT of modifications specific to the http dot command by Remy Sharp
 
     MODULE Wifi
 bytesAvail DW 0

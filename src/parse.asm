@@ -10,7 +10,7 @@ showHelp:
 		;; careful is if I wanted to print anything else - then I'd more
 		;; likely need to reserve a bank, load it into an MMU and then
 		;; stick the stack there.
-		ld sp, (Exit.stack)
+		ld sp, (Exit.SMC_stack)
 		call PrintRst16
 		and a					; Exit Fc=0
 		jp Exit.nop
@@ -80,7 +80,8 @@ parseOption
 		cp 'u' : jr z, parseUrl
 		cp 'l' : jr z, parseLength
 		cp 'o' : jr z, parseOffset
-		cp 'f' : jr z, parseFlashBorder
+		cp 'f' : jr z, parseFilename
+		cp 'v' : jr z, parseFlashBorder		; because FLASH is on the v key :)
 		jr parseError
 parse7bit:
 		;; lol, this is horrible...
@@ -141,6 +142,7 @@ parseBank:	ld de, State.bank : jr continueOption
 parseHost:	ld de, State.host : jr continueOption
 parsePort:	ld de, State.port : jr continueOption
 parseUrl:	ld de, State.url : jr continueOption
+parseFilename:	ld de, State.filename : jr continueOption
 parseLength:	ld de, State.length : jr continueOption
 parseOffset:	ld de, State.offset : jr continueOption
 parseFlashBorder:

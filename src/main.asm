@@ -13,13 +13,13 @@
 
 	IFDEF TESTING
 		OPT --zxnext=cspect
-		CSPECTMAP "httpbank.map"
+		CSPECTMAP "http.map"
 		DISPLAY "Adding jump to ",/H,testStart
 testStart:
 		exx
 		ld hl, $9FFF
 		exx
-		; ld hl, testFakeArgumentsLine
+		ld hl, testFakeArgumentsLine
 		call start
 		ret
 testFakeArgumentsLine
@@ -29,6 +29,9 @@ testFakeArgumentsLine
 		; DZ "post -b 21 -h data.remysharp.com -u /1 -f 3 -l 5000"
 		; DZ "post -b 21 -h data.remysharp.com -u /1 -f 4 -l 5000 -7"
 		; DZ "get -b 5 -h data.remysharp.com -u /2 -7 -o -0 -f 3"
+		; DZ "get -f demo.scr -h data.remysharp.com -u /2 -7 -v 3"
+		DZ "get -f demo.tap -h 192.168.1.118 -p 8000 -u /7get/18840 -7 -v 3"
+		; DZ "get -b 20 -h 192.168.1.118 -u /output.bin -p 5000 -v 3"
 		; DZ "post -b 21 -h data.remysharp.com -u /1 -f 3 -l 16384 -7"
 
 	ENDIF
@@ -48,17 +51,17 @@ init:
 		ld ixl, 0				; IXL is being used to track the padding length
 		ld ixh, 0
 
-		ld (Exit.stack), sp			; set my own stack so this dot command can be called
+		ld (Exit.SMC_stack), sp			; set my own stack so this dot command can be called
 		ld sp, stackTop				; from other projects
 
 		ld a, (BORDCR)				; save SYSB the border for restore later
-		ld (Exit.border), a
+		ld (Exit.SMC_border), a
 		call Border.Init
 
 		;; set cpu speed to 28mhz
 		NextRegRead CPUSpeed			; Read CPU speed
 		and %11					; Mask out everything but the current desired speed
-		ld (Exit.cpu), a			; Save current speed so it can be restored on exit
+		ld (Exit.SMC_cpu), a			; Save current speed so it can be restored on exit
 		nextreg CPUSpeed, %11			; Set current desired speed to 28MHz
 
 		;; parse the command line arguments
@@ -86,10 +89,33 @@ init:
 .setupBank
 		;; page in our bank
 		ld de, State.bank
+		;; if bank is still zero either there's an error or the user is
+		;; working with a file
+		ld a, (de)
+		and a
+		jr z, .useFiles
+
 		call StringToNumber16
 		jr c, bankError
-		ld a, l					; expecting HL to be < 144 (total number of banks in 2mb)
+		ld c, l					; expecting HL to be < 144 (total number of banks in 2mb)
 		call Bank.init
+		jr .setupBankContinue
+.useFiles
+		xor a
+		ld (Bank.loadToBank), a			; save 0 to Bank.loadToBank
+
+		ld de, State.filename
+		ld a, (de)
+		or a
+		jr z, noFileOrBankError
+
+		call Bank.init
+		;; open the file - TODO decide if it's an append or create
+		ld hl, State.filename
+		call esxDOS.fOpen
+		jr c, fileOpenError
+
+.setupBankContinue
 
 	IFDEF TESTING
 		;; must happen after Bank.init
@@ -130,6 +156,13 @@ hostError:
 borderError:
 		ld hl, Err.borderError
 		jp Error
+noFileOrBankError:
+		ld hl, Err.noFileOrBank
+		jp Error
+fileOpenError:
+		ld hl, Err.fileOpen
+		jp Error
+
 offsetError:
 		ld hl, Err.offsetError
 		jp Error
@@ -252,6 +285,7 @@ Get
 		ld bc, Bank.buffer			; BC is our starting point
 		add hl, bc				; then add the offset
 		ld (Wifi.bufferPointer), hl		; and now http response will be stored here.
+		ld (State.memoryStart), hl
 
 		;; prepare the http request headers
 		ld de, requestBuffer			; DE is our working buffer
@@ -269,6 +303,24 @@ Get
 		call Wifi.tcpSendString
 LoadPackets
 		call Wifi.getPacket
+
+		;; now write to file if required
+		ld a, (Bank.loadToBank)
+		or a
+		jr nz, .skipFileWrite
+
+		;; point HL to the start of the buffer, and set BC to the length
+		;; of bytes we need to save which is HL - State.memoryStart
+
+		ld de, (State.memoryStart)
+		sbc hl, de				; HL - DE
+		ld b, h					; Save HL to BC
+		ld c, l
+		; CSP_BREAK
+		ld hl, (State.memoryStart)
+		ld (Wifi.bufferPointer), hl		; reset the wifi buffer too
+		call esxDOS.fWrite
+.skipFileWrite
 		ld a, (Wifi.closed)
 		and a
 		jr nz, Exit
@@ -281,18 +333,24 @@ Error
 
 Exit
 		;; for a clean exit, the carry flag needs to be clear (and a)
+		push af
+		push hl
 		call Bank.restore
+		call esxDOS.fClose
+		pop hl
+		pop af
 .nop
 		ld b, a					; put a somewhere
-.border EQU $+1
+.SMC_border EQU $+1
 		ld a, SMC				; restore the user's border
 		ld (BORDCR), a
+		call Border.Restore
 		ld a, b
-.stack EQU $+1
+.SMC_stack EQU $+1
 		ld sp, SMC				; the original stack pointer is set here upon load
 		pop iy
 		pop ix
-.cpu EQU $+3:
+.SMC_cpu EQU $+3:
 		nextreg CPUSpeed, SMC       		; Restore original CPU speed
 		ei
 		ret
@@ -305,6 +363,7 @@ Exit
 	INCLUDE "wifi.asm"
 	INCLUDE "utils.asm"
 	INCLUDE "bank.asm"
+	INCLUDE "file.asm"
 	INCLUDE "parse.asm"
 	INCLUDE "strings.asm"
 	INCLUDE "base64.asm"
@@ -329,18 +388,18 @@ diagBinPcLo 	EQU ((100*diagBinSz)%8192)*10/8192
     	DISPLAY "Binary size: ",/D,diagBinSz," (",/D,diagBinPcHi,".",/D,diagBinPcLo,"% of dot command 8kiB)"
 
 	IFNDEF TESTING
-		SAVEBIN "httpbank",start,last-start
+		SAVEBIN "http",start,last-start
 		DISPLAY "prod build"
 	ELSE
-		SAVEBIN "httpbank-debug.dot",testStart,last-testStart
+		SAVEBIN "http-debug.dot",testStart,last-testStart
 
 		DEFINE LAUNCH_CSPECT
 
 		IFDEF LAUNCH_CSPECT : IF ((_ERRORS = 0) && (_WARNINGS = 0))
 			;; delete any autoexec.bas
 			SHELLEXEC "(hdfmonkey rm /Applications/cspect/app/cspect-next-2gb.img /nextzxos/autoexec.bas > /dev/null) || exit 0"
-			SHELLEXEC "hdfmonkey put /Applications/cspect/app/cspect-next-2gb.img httpbank-debug.dot /devel/httpbank.dot"
-			SHELLEXEC "mono /Applications/cspect/app/cspect.exe -r -w5 -basickeys -zxnext -nextrom -exit -brk -tv -mmc=/Applications/cspect/app/cspect-next-2gb.img -map=./httpbank.map"
+			SHELLEXEC "hdfmonkey put /Applications/cspect/app/cspect-next-2gb.img http-debug.dot /devel/http-debug.dot"
+			SHELLEXEC "mono /Applications/cspect/app/cspect.exe -r -w5 -basickeys -zxnext -nextrom -exit -brk -tv -mmc=/Applications/cspect/app/cspect-next-2gb.img -map=./http.map"
 		ENDIF : ENDIF
 		DISPLAY "TEST BUILD"
 	ENDIF
