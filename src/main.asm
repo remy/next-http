@@ -29,8 +29,8 @@ testFakeArgumentsLine
 		; DZ "post -b 21 -h data.remysharp.com -u /1 -f 3 -l 5000"
 		; DZ "post -b 21 -h data.remysharp.com -u /1 -f 4 -l 5000 -7"
 		; DZ "get -b 5 -h data.remysharp.com -u /2 -7 -o -0 -f 3"
-		; DZ "get -f demo.scr -h data.remysharp.com -u /2 -7 -v 3"
-		DZ "get -f demo.tap -h 192.168.1.118 -p 8000 -u /7get/18840 -7 -v 3"
+		DZ "get -f demo.scr -h data.remysharp.com -u /5 -v 3"
+		; DZ "get -f demo.tap -h zxdb.remysharp.com -u /get/18840 -v 3"
 		; DZ "get -b 20 -h 192.168.1.118 -u /output.bin -p 5000 -v 3"
 		; DZ "post -b 21 -h data.remysharp.com -u /1 -f 3 -l 16384 -7"
 
@@ -110,7 +110,7 @@ init:
 		jr z, noFileOrBankError
 
 		call Bank.init
-		;; open the file - TODO decide if it's an append or create
+		;; open the file in create mode
 		ld hl, State.filename
 		call esxDOS.fOpen
 		jr c, fileOpenError
@@ -316,7 +316,7 @@ LoadPackets
 		sbc hl, de				; HL - DE
 		ld b, h					; Save HL to BC
 		ld c, l
-		; CSP_BREAK
+		; CSP_BREAK`
 		ld hl, (State.memoryStart)
 		ld (Wifi.bufferPointer), hl		; reset the wifi buffer too
 		call esxDOS.fWrite
@@ -398,8 +398,8 @@ diagBinPcLo 	EQU ((100*diagBinSz)%8192)*10/8192
 		IFDEF LAUNCH_CSPECT : IF ((_ERRORS = 0) && (_WARNINGS = 0))
 			;; delete any autoexec.bas
 			SHELLEXEC "(hdfmonkey rm /Applications/cspect/app/cspect-next-2gb.img /nextzxos/autoexec.bas > /dev/null) || exit 0"
-			SHELLEXEC "hdfmonkey put /Applications/cspect/app/cspect-next-2gb.img http-debug.dot /devel/http-debug.dot"
-			SHELLEXEC "mono /Applications/cspect/app/cspect.exe -r -w5 -basickeys -zxnext -nextrom -exit -brk -tv -mmc=/Applications/cspect/app/cspect-next-2gb.img -map=./http.map"
+			SHELLEXEC "hdfmonkey put /Applications/cspect/app/cspect-next-2gb.img http-debug.dot /dot/http"
+			SHELLEXEC "mono /Applications/cspect/app/cspect.exe -r -w5 -basickeys -zxnext -nextrom -exit -brk -tv -mmc=/Applications/cspect/app/cspect-next-2gb.img -map=./http.map -com='/dev/tty.wchusbserial1430:11520' -sd2=/Applications/cspect/app/empty-32mb.img"
 		ENDIF : ENDIF
 		DISPLAY "TEST BUILD"
 	ENDIF

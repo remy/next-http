@@ -1,4 +1,5 @@
-; esxDOS.asm
+; Modified version of exdos.asm from Robin Verhagen-Guest, spliced with code
+; from Matt Davies (in Odin) and my own tweaks
 
 ;  Copyright 2019-2020 Robin Verhagen-Guest
 ;
@@ -70,5 +71,24 @@ fClose:
 		ret z
 		dos F_CLOSE            ; close file
 		ret
-	ENDMODULE
 
+
+; Get current folder into FileName buffer
+;
+; Modifies: State.filename
+; Fc <- 1 if error occurs
+;
+fGetCwd:
+                push    af
+		push 	hl
+
+                ld      a,'*'
+                ld      hl, State.filename
+                dos 	F_GETCWD
+
+.end:
+                pop     hl
+		pop 	af
+                ret
+
+	ENDMODULE
