@@ -10,7 +10,7 @@ bufferPointer DW 0
 closed DB 1
 skipReply DB 0
 firstRead DB 1
-byteCounter DB 0
+bufferLength DW 0
 restarted DB 0
 
 	DISPLAY "Wifi error @ ",/H,$
@@ -390,6 +390,7 @@ getPacket:
 
 	ld b, d					; load DE (back) into BC
 	ld c, e
+	ld (bufferLength), bc			; save the length for saving to file
 
 	;; check if the header was all we got in the IPD request
 	ld a, b
@@ -408,28 +409,28 @@ getPacket:
 	ld a, ixh
 	add de, a
 
-	IFDEF TESTING
-		and a
-		call nz, .captureIXState
-		jr .readp
-.captureIXState
-		ld iyh, d
-		ld iyl, e
-		exx
-		ld a, ixh
-		ld (hl), a
-		dec hl
+; 	IFDEF TESTING
+; 		and a
+; 		call nz, .captureIXState
+; 		jr .readp
+; .captureIXState
+; 		ld iyh, d
+; 		ld iyl, e
+; 		exx
+; 		ld a, ixh
+; 		ld (hl), a
+; 		dec hl
 
-		ld d, iyh
-		ld e, iyl
+; 		ld d, iyh
+; 		ld e, iyl
 
-		ld (hl), e
-		dec hl
-		ld (hl), d
-		dec hl
-		exx
-		ret
-	ENDIF
+; 		ld (hl), e
+; 		dec hl
+; 		ld (hl), d
+; 		dec hl
+; 		exx
+; 		ret
+; 	ENDIF
 .readp
 	ld a, h
 	cp HIGH Bank.buffer

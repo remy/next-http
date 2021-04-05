@@ -1,9 +1,9 @@
 	MODULE Bank
 
 loadToBank	DEFB 1			; 1 = default = load into a bank, 0 = load by file
-prevBankA	DEFB 0
-prevBankB	DEFB 0
-userBank	DEFB 0
+prevPageA	DEFB 0
+prevPageB	DEFB 0
+userBank	DEFB 0,0
 
 pageA		EQU MMU4_8000_NR_54
 pageB		EQU MMU5_A000_NR_55
@@ -20,6 +20,18 @@ debug		DW $A000
 ; C <- 16K bank number to use as active bank
 ; Modifies: A, BC (via macro)
 init:
+		push bc
+
+		;; backup the banks that are sitting over $8000 and $A000
+		;; note that with a dot file, the stack originally is sitting at $FF42
+		;; so if I do use this area, I need to set my own stackTop
+		NextRegRead pageA		; loads A with pageA bank number
+		ld (prevPageA), a
+		NextRegRead pageB
+		ld (prevPageB), a
+
+		pop bc
+
 		;; check the bank init method, `loadToBank` = 1 if we're loading
 		;; data in and out of banks, and set to 0 if we're working with
 		;; files
@@ -32,16 +44,7 @@ init:
 		add a, a
 		ld (userBank), a
 
-		;; backup the banks that are sitting over $8000 and $A000
-		;; note that with a dot file, the stack originally is sitting at $FF42
-		;; so if I do use this area, I need to set my own stackTop
-		NextRegRead pageA		; loads A with pageA bank number
-		ld (prevBankA), a
-		NextRegRead pageB
-		ld (prevBankB), a
-
 		;; now page in our user banks
-		ld a, (userBank)
 		nextreg	pageA, a ; set bank to A
 		inc a
 		nextreg	pageB, a ; set bank to A
@@ -50,10 +53,12 @@ init:
 .initNewBank
 		call allocPage
 		ld (userBank), a
-		NextRegRead pageA		; loads A with pageA bank number
-		ld (prevBankA), a
-		ld a, (userBank)
 		nextreg	pageA, a ; set bank to A
+
+		call allocPage
+		ld (userBank+1), a
+		nextreg	pageB, a ; set bank to A
+
 		ret
 erase:
 		;; FIXME should probably zero out the file
@@ -71,23 +76,25 @@ erase:
 restore:
 		push af					; protect the F flags
 
+		ld a, (prevPageA)
+		nextreg	pageA, a
+		ld a, (prevPageB)
+		nextreg	pageB, a
+
 		ld a, (loadToBank)
 		or a
-		jr z, .releaseBank
+		jr nz, .done
 
-		ld a, (prevBankA)
-		nextreg	pageA, a
-		ld a, (prevBankB)
-		nextreg	pageB, a
-		pop af
-		ret
-
-.releaseBank
-		ld a, (prevBankA)
-		nextreg	pageA, a
+		;; if writing to a file, we need to release the 2 pages we allocated
 		ld a, (userBank)
 		ld e, a
 		call freePage
+
+		ld a, (userBank+1)
+		ld e, a
+		call freePage
+
+.done
 		pop af
 		ret
 

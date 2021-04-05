@@ -16,9 +16,9 @@
 		CSPECTMAP "http.map"
 		DISPLAY "Adding jump to ",/H,testStart
 testStart:
-		exx
-		ld hl, $9FFF
-		exx
+		; exx
+		; ld hl, $9FFF
+		; exx
 		ld hl, testFakeArgumentsLine
 		call start
 		ret
@@ -29,9 +29,10 @@ testFakeArgumentsLine
 		; DZ "post -b 21 -h data.remysharp.com -u /1 -f 3 -l 5000"
 		; DZ "post -b 21 -h data.remysharp.com -u /1 -f 4 -l 5000 -7"
 		; DZ "get -b 5 -h data.remysharp.com -u /2 -7 -o -0 -f 3"
-		DZ "get -f demo.scr -h data.remysharp.com -u /5 -v 3"
-		; DZ "get -f demo.tap -h zxdb.remysharp.com -u /get/18840 -v 3"
-		; DZ "get -b 20 -h 192.168.1.118 -u /output.bin -p 5000 -v 3"
+		; DZ "get -f demo.scr -h data.remysharp.com -u /5 -v 2"
+		; DZ "get -b 5 -o -0 -h data.remysharp.com -u /5 -v 2"
+		; DZ "get -f http-demo.tap -h zxdb.remysharp.com -u /get/18840 -v 2"
+		DZ "get -f output.bin -h 192.168.1.118 -u /output.bin -p 5000 -v 3"
 		; DZ "post -b 21 -h data.remysharp.com -u /1 -f 3 -l 16384 -7"
 
 	ENDIF
@@ -304,21 +305,19 @@ Get
 LoadPackets
 		call Wifi.getPacket
 
+		;; FIXME if we're base64 then we only write when we're either
+		;; finished or on the bounary between encoded bytes
+
 		;; now write to file if required
 		ld a, (Bank.loadToBank)
 		or a
 		jr nz, .skipFileWrite
 
-		;; point HL to the start of the buffer, and set BC to the length
-		;; of bytes we need to save which is HL - State.memoryStart
-
-		ld de, (State.memoryStart)
-		sbc hl, de				; HL - DE
-		ld b, h					; Save HL to BC
-		ld c, l
-		; CSP_BREAK`
-		ld hl, (State.memoryStart)
-		ld (Wifi.bufferPointer), hl		; reset the wifi buffer too
+		; ld hl, (State.memoryStart)
+		ld hl, Bank.buffer
+		ld (Wifi.bufferPointer), hl		; reset the wifi buffer at the same time
+		ld bc, (Wifi.bufferLength)
+		CSP_BREAK
 		call esxDOS.fWrite
 .skipFileWrite
 		ld a, (Wifi.closed)
@@ -328,6 +327,7 @@ LoadPackets
 
 ; HL = pointer to error string
 Error
+		CSP_BREAK
 		xor a					; set A = 0 - TODO is this actually needed?
 		scf					; Exit Fc=1
 
@@ -399,7 +399,7 @@ diagBinPcLo 	EQU ((100*diagBinSz)%8192)*10/8192
 			;; delete any autoexec.bas
 			SHELLEXEC "(hdfmonkey rm /Applications/cspect/app/cspect-next-2gb.img /nextzxos/autoexec.bas > /dev/null) || exit 0"
 			SHELLEXEC "hdfmonkey put /Applications/cspect/app/cspect-next-2gb.img http-debug.dot /dot/http"
-			SHELLEXEC "mono /Applications/cspect/app/cspect.exe -r -w5 -basickeys -zxnext -nextrom -exit -brk -tv -mmc=/Applications/cspect/app/cspect-next-2gb.img -map=./http.map -com='/dev/tty.wchusbserial1430:11520' -sd2=/Applications/cspect/app/empty-32mb.img"
+			SHELLEXEC "mono /Applications/cspect/app/cspect.exe -r -w5 -basickeys -zxnext -nextrom -exit -brk -tv -mmc=/Applications/cspect/app/cspect-next-2gb.img -map=./http.map -sd2=/Applications/cspect/app/empty-32mb.img";  -com='/dev/tty.wchusbserial1420:11520'"
 		ENDIF : ENDIF
 		DISPLAY "TEST BUILD"
 	ENDIF
