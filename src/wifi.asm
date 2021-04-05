@@ -361,9 +361,11 @@ getPacket:
 	call Uart.read ; Comma
 	call .count_ipd_length : ld (bytesAvail), hl
 
-	ld a, (skipReply)
-	cp 1
-	jp z, .slurp
+	ld (bufferLength), hl			; save the length for saving to file
+
+	ld a, (skipReply)			; the body isn't needed if we're doing a POST
+	and a
+	jp nz, .slurp
 
 	;; put the byte count (from the AT response) in DE (to later to be put in BC)
 	ex de, hl
@@ -383,6 +385,8 @@ getPacket:
 	call Uart.read : dec de : cp CR : jr nz, .searchForBlankLine
 	call Uart.read : dec de ; LR
 
+	ld (bufferLength), de			; save the length for saving to file
+
 	ld a, 0
 	ld (firstRead), a
 .headerProcessed
@@ -390,7 +394,6 @@ getPacket:
 
 	ld b, d					; load DE (back) into BC
 	ld c, e
-	ld (bufferLength), bc			; save the length for saving to file
 
 	;; check if the header was all we got in the IPD request
 	ld a, b

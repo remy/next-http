@@ -305,6 +305,10 @@ Get
 LoadPackets
 		call Wifi.getPacket
 
+		ld a, (Wifi.closed)
+		and a
+		jr nz, Exit
+
 		;; FIXME if we're base64 then we only write when we're either
 		;; finished or on the bounary between encoded bytes
 
@@ -320,9 +324,6 @@ LoadPackets
 		CSP_BREAK
 		call esxDOS.fWrite
 .skipFileWrite
-		ld a, (Wifi.closed)
-		and a
-		jr nz, Exit
 		jr LoadPackets
 
 ; HL = pointer to error string
