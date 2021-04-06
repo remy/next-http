@@ -58,7 +58,6 @@ fRead:
 fWrite:
 		ld a, (Handle)
 		dos F_WRITE
-		CSP_BREAK
 		ret
 
 

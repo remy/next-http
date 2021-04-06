@@ -19,7 +19,7 @@ testStart:
 		; exx
 		; ld hl, $9FFF
 		; exx
-		ld hl, testFakeArgumentsLine
+		; ld hl, testFakeArgumentsLine
 		call start
 		ret
 testFakeArgumentsLine
@@ -53,7 +53,6 @@ init:
 		ld ixh, 0
 
 		ld (Exit.SMC_stack), sp			; set my own stack so this dot command can be called
-		ld sp, stackTop				; from other projects
 
 		ld a, (BORDCR)				; save SYSB the border for restore later
 		ld (Exit.SMC_border), a
@@ -67,6 +66,14 @@ init:
 
 		;; parse the command line arguments
 		call Parse.start
+
+		;; only now do I set my own SP. This needs to happen _after_
+		;; Parse.start because the argument parsing routine can possibly
+		;; call RST $10 (for "show help") or RST $18 (for args as
+		;; NextBASIC variables) - and both these restart routines expect
+		;; the stack to be sitting _outside_ the dot command (see NextOS
+		;; and esxDOS APIs PDF, pg 26).
+		ld sp, stackTop
 
 		;; set up the border flashing
 		ld de, State.border
@@ -321,14 +328,12 @@ LoadPackets
 		ld hl, Bank.buffer
 		ld (Wifi.bufferPointer), hl		; reset the wifi buffer at the same time
 		ld bc, (Wifi.bufferLength)
-		CSP_BREAK
 		call esxDOS.fWrite
 .skipFileWrite
 		jr LoadPackets
 
 ; HL = pointer to error string
 Error
-		CSP_BREAK
 		xor a					; set A = 0 - TODO is this actually needed?
 		scf					; Exit Fc=1
 
