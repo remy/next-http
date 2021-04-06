@@ -3,14 +3,6 @@
 currentOption:	DW 0
 showHelp:
 		ld hl, Msg.help
-		;; I need to restore the original stack here because I can't have
-		;; the SP in the range of $0000-$3FFF - it'll get wiped during RST $10
-		;; and since we're going to exit right after this *and* restore
-		;; the stack (again), this is totally fine. The place to be
-		;; careful is if I wanted to print anything else - then I'd more
-		;; likely need to reserve a bank, load it into an MMU and then
-		;; stick the stack there.
-		ld sp, (Exit.stack)
 		call PrintRst16
 		and a					; Exit Fc=0
 		jp Exit.nop
@@ -80,7 +72,8 @@ parseOption
 		cp 'u' : jr z, parseUrl
 		cp 'l' : jr z, parseLength
 		cp 'o' : jr z, parseOffset
-		cp 'f' : jr z, parseFlashBorder
+		cp 'f' : jr z, parseFilename
+		cp 'v' : jr z, parseFlashBorder		; because FLASH is on the v key :)
 		jr parseError
 parse7bit:
 		;; lol, this is horrible...
@@ -88,7 +81,7 @@ parse7bit:
 		;; modify the code on the fly, and nop the jump that skips over
 		;; the 7-bit support. A little expensive at 111 cycles(!) but really
 		;; not a huge deal.
-		ld a, 0
+		xor a					; set A = 0
 		ld (Post.SMC_check7bitSupport1), a
 		ld (Post.SMC_check7bitSupport1+1), a
 		ld (Post.SMC_check7bitSupport2), a
@@ -103,6 +96,9 @@ parse7bit:
 		ld (Post.SMC_sendPostMethod), a
 		ld a, h
 		ld (Post.SMC_sendPostMethod+1), a
+
+		ld a, 1
+		ld (State.encoded), a
 
 		pop hl
 
@@ -141,6 +137,7 @@ parseBank:	ld de, State.bank : jr continueOption
 parseHost:	ld de, State.host : jr continueOption
 parsePort:	ld de, State.port : jr continueOption
 parseUrl:	ld de, State.url : jr continueOption
+parseFilename:	ld de, State.filename : jr continueOption
 parseLength:	ld de, State.length : jr continueOption
 parseOffset:	ld de, State.offset : jr continueOption
 parseFlashBorder:
@@ -171,7 +168,9 @@ readFromNextBASIC
 		jr z, .variableFound			; on if matches string name
 		push de
 		push bc
+		; ld sp, (Exit.SMC_stack)
 		call48k NEXT_ONE_r3			; DE=next variable
+		; ld sp, stack
 		pop bc
 		ex de, hl				; HL=next variable
 		pop de

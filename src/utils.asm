@@ -73,7 +73,7 @@ PrintRst16:
 .loop:
 	        ld a, (hl)
 		inc hl
-		or a
+		and a
 		jr z, .return
 		rst 16
 		jr .loop
@@ -90,35 +90,51 @@ PrintRst16:
 ;     DE points to the byte after the number
 ;     z flag reset (nz)
 StringToNumber16:
-	ld hl, 0				; init HL to zero
+		ld hl, 0				; init HL to zero
 .convLoop:
-	ld a, (de)
-	and a
-	ret z					; null character exit
+		ld a, (de)
+		and a
+		ret z					; null character exit
 
-	sub $30					; take DE and subtract $30 (48 starting point for numbers in ascii)
-	ret c					; if we have a carry, then we're
+		sub $30					; take DE and subtract $30 (48 starting point for numbers in ascii)
+		ret c					; if we have a carry, then we're
 
-	scf					; set the carry flag to test-
-	cp 10					; if A >= 10 then we also have an error
-	jr nc, .error
+		scf					; set the carry flag to test-
+		cp 10					; if A >= 10 then we also have an error
+		jr nc, .error
 
-	inc de
+		inc de
 
-	ld b, h					; copy HL to BC
-	ld c, l
+		ld b, h					; copy HL to BC
+		ld c, l
 
-	add hl, hl				; (HL * 4 + HL) * 2 = HL * 10
-	add hl, hl
-	add hl, bc
-	add hl, hl
+		add hl, hl				; (HL * 4 + HL) * 2 = HL * 10
+		add hl, hl
+		add hl, bc
+		add hl, hl
 
-	add a, l
-	ld l, a
-	jr nc, .convLoop
-	inc h
-	jr .convLoop
+		add a, l
+		ld l, a
+		jr nc, .convLoop
+		inc h
+		jr .convLoop
 
 .error
-	scf
-	ret
+		scf
+		ret
+
+
+; Return the address of the end of string
+;
+; HL = string
+; HL <- end of string
+strEnd:
+                push    af
+                xor     a
+                dec     hl
+.l1:            inc     hl
+                cp      (hl)
+                jp      nz,.l1
+                pop     af
+                ret
+

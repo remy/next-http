@@ -51,3 +51,12 @@ NextRegRead MACRO Register
 		ld a, Register
 		call NextRegReadProc
 	ENDM
+
+dos     MACRO   func
+                rst     8
+                db      func
+	ENDM
+
+page    MACRO   slot, page
+                nextreg REG_MMU0+slot,page
+	ENDM

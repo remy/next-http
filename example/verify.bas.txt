@@ -1,0 +1,24 @@
+#program verify
+10 LAYER 0: CLS
+20 BANK 20 ERASE
+30 PRINT AT 0,0; INVERSE 1;"HTTP test suite"; INVERSE 0
+40 ON ERROR GO SUB 9000
+45 t$="4k":u$="/10":%r=2: GO SUB 1060
+50 t$="8k":u$="/8":%r=4: GO SUB 1060
+60 t$="16k":u$="/9":%r=6: GO SUB 1060
+70 t$="32k":u$="/7":%r=8: GO SUB 1060
+80 ON ERROR
+90 PRINT FLASH 1;"Success"
+1000 PAUSE 0: STOP
+1060 PRINT AT %r,0;t$+" test..."
+1070 t$=t$+".bin"
+1080 .http -h data.remysharp.com -u u$ -f t$ -v 6
+1090 PRINT AT %r,11;"done. Verifying: "
+1100 c$=t$+" -1 -mb 20"
+1110 .$ extract c$
+1120 %i=% BANK 20 PEEK 0
+1130 IF %i=$FF THEN PRINT AT %r,27; INVERSE 1;"OK"; INVERSE 0: ELSE PRINT AT %r,27; FLASH 1;"BAD": PAUSE 0: STOP
+1140 RETURN
+
+9000 ON ERROR
+9050 PRINT FLASH 1;"ERROR": ERROR : PAUSE 0: STOP
