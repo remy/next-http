@@ -81,7 +81,7 @@ parse7bit:
 		;; modify the code on the fly, and nop the jump that skips over
 		;; the 7-bit support. A little expensive at 111 cycles(!) but really
 		;; not a huge deal.
-		ld a, 0
+		xor a					; set A = 0
 		ld (Post.SMC_check7bitSupport1), a
 		ld (Post.SMC_check7bitSupport1+1), a
 		ld (Post.SMC_check7bitSupport2), a
@@ -96,6 +96,9 @@ parse7bit:
 		ld (Post.SMC_sendPostMethod), a
 		ld a, h
 		ld (Post.SMC_sendPostMethod+1), a
+
+		ld a, 1
+		ld (State.encoded), a
 
 		pop hl
 

@@ -73,7 +73,7 @@ PrintRst16:
 .loop:
 	        ld a, (hl)
 		inc hl
-		or a
+		and a
 		jr z, .return
 		rst 16
 		jr .loop

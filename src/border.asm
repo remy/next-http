@@ -9,7 +9,7 @@ Border:
 		jr nc, .addColour
 .userColour EQU $+1
 		ld a, SMC
-		or a				; reset carry
+		and a				; reset carry
 		jr .apply
 .addColour
 .newColour EQU $+1

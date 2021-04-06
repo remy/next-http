@@ -109,18 +109,19 @@ init:
 		call Bank.init
 		jr .setupBankContinue
 .useFiles
-		xor a
-		ld (Bank.loadToBank), a			; save 0 to Bank.loadToBank
+		ld a, (State.encoded)
+		inc a
+		ld (State.fileMode), a			; 1 = saving to file, 2 = decoding and saving
 
 		ld de, State.filename
 		ld a, (de)
-		or a
+		and a
 		jr z, noFileOrBankError
 
 		call Bank.init
 		;; open the file in create mode
 		ld hl, State.filename
-		call esxDOS.fOpen
+		call esxDOS.fOpen			; NOTE this makes the file even if there's an error
 		jr c, fileOpenError
 
 .setupBankContinue
@@ -293,7 +294,6 @@ Get
 		ld bc, Bank.buffer			; BC is our starting point
 		add hl, bc				; then add the offset
 		ld (Wifi.bufferPointer), hl		; and now http response will be stored here.
-		ld (State.memoryStart), hl
 
 		;; prepare the http request headers
 		ld de, requestBuffer			; DE is our working buffer
@@ -316,16 +316,12 @@ LoadPackets
 		and a
 		jr nz, Exit
 
-		;; FIXME if we're base64 then we only write when we're either
-		;; finished or on the bounary between encoded bytes
-
 		;; now write to file if required
-		ld a, (Bank.loadToBank)
-		or a
+		ld a, (State.fileMode)
+		cp WRITE_TO_FILE
 		jr nz, .skipFileWrite
 
-		; ld hl, (State.memoryStart)
-		ld hl, Bank.buffer
+		ld hl, Bank.buffer			; HL = starting point
 		ld (Wifi.bufferPointer), hl		; reset the wifi buffer at the same time
 		ld bc, (Wifi.bufferLength)
 		call esxDOS.fWrite

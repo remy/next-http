@@ -62,7 +62,7 @@ EncodedLength
 		rl l
 		rl h					; make sure to carry to H
 
-		or a					; now clear the carry
+		and a					; now clear the carry
 		rl l					; and repeat
 		rl h
 
@@ -85,7 +85,7 @@ EncodedLength
 		;; HL now contains estimated source length, now we substract
 		;; the original length stored in BC to work out how many
 		;; padding bytes we need
-		or a					; first clear the  carry
+		and a					; first clear the  carry
 		sbc hl, bc				; HL - BC (and the carry, but that's cleared)
 		ld a, l					; will be 0, 1 or 2
 		ld (State.paddingReal), a		; squirrel away for later

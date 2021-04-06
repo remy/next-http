@@ -1,3 +1,6 @@
+WRITE_TO_FILE		EQU 1
+FILE_AND_ENCODING 	EQU 2
+
 ULA_PORT                EQU $FE                         ; out (254), a
 CR                      EQU 13
 LF                      EQU 10

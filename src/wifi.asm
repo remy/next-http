@@ -1,4 +1,6 @@
-; Origial source author: Alexander Sharikhin nihirash
+; This code started out as the wifi.asm from internet-nextplorer - but has now
+; been long transformed into something (uglier!) different. However, right at
+; start, the origial source author is Alexander Sharikhin nihirash
 ; License: https://github.com/nihirash/internet-nextplorer/blob/89baa64d974e2d916862280a9ec2f52247923172/LICENSE
 ; By them a coffee :-)
 ;
@@ -12,8 +14,6 @@ skipReply DB 0
 firstRead DB 1
 bufferLength DW 0
 restarted DB 0
-
-	DISPLAY "Wifi error @ ",/H,$
 error DW 0
 fail DW 0
 timeout DW Err.ESPTimeout
@@ -27,7 +27,7 @@ init:
 	EspCmdOkErr "AT+CIPMUX=0" ; Single connection mode
 	jr c, .initError
 
-	or a
+	and a
 	ret
 .initError
 	call RetartESP
@@ -59,7 +59,7 @@ RetartESP:
 	call Uart.read : cp ' '  : jr nz, .checkWifiConnect
 	call Uart.read : cp 'G'  : jr nz, .checkWifiConnect  ; searching for "WIFI CONNECTED"
 	call flushToLF
-	or a
+	and a
 	ret
 
 
@@ -97,7 +97,7 @@ checkOkErr:
 	call Uart.read : cp 'K' : jr nz, checkOkErr
 	call Uart.read : cp 13  : jr nz, checkOkErr
 	call flushToLF
-	or a
+	and a
 	ret
 .errStart
 	call Uart.read : cp 'R' : jr nz, checkOkErr
@@ -192,7 +192,7 @@ tcpSendEncodedBufferFrame:
 	push bc
 
 	;; test value of bc here
-	or a					; clear carry
+	and a					; clear carry
 
 	ld a, b
 	and a					; if B != 0 then skip
@@ -470,6 +470,25 @@ getPacket:
 	ld c, a
 	ldir
 
+	;; if we're base64 decoding AND writing to a file, then let's go to town
+	ld a, (State.fileMode)
+	cp FILE_AND_ENCODING
+	jp nz, .skipWriteToFile
+
+	;; so... this is going to be "slow" compared to all other usage because
+	;; we're writing 4 bytes at a time to "disk", but this is _only_ for the
+	;; encoded 7-bit method, which is more of a hack to support cspect in
+	;; it's emulated esp mode, which frankly I probably shouldn't do anyway.
+	push hl
+	push de
+	ld bc, 3
+	ld hl, Base64.output
+	call esxDOS.fWrite
+	pop de
+	pop hl
+	ld de, (Bank.buffer)
+
+.skipWriteToFile
 	ex de, hl				; update the tip of our result buffer
 	ld (bufferPointer), hl			; save
 	ld de, Base64.buffer-1			; reset DE to the start of the buffer (-1 because it'll immediately increment)

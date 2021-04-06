@@ -67,7 +67,7 @@ fWrite:
 ; Fc <- active if error when closing
 fClose:
 		ld a, (Handle)
-		or a
+		and a
 		ret z
 		dos F_CLOSE            ; close file
 		ret

@@ -1,6 +1,5 @@
 	MODULE Bank
 
-loadToBank	DEFB 1			; 1 = default = load into a bank, 0 = load by file
 prevPageA	DEFB 0
 prevPageB	DEFB 0
 userBank	DEFB 0,0
@@ -8,9 +7,8 @@ userBank	DEFB 0,0
 pageA		EQU MMU4_8000_NR_54
 pageB		EQU MMU5_A000_NR_55
 
-					; NOTE: MMU3/5 are safe from being
-					;       paged out when making NextZXOS
-					;       calls (unlike MMU0/1/6/7)
+		;; NOTE: MMU3/5 are safe from being paged out when making
+		;; NextZXOS calls (unlike MMU0/1/6/7)
 
 buffer		EQU $8000
 	IFDEF TESTING
@@ -33,11 +31,11 @@ init:
 		pop bc
 
 		;; check the bank init method, `loadToBank` = 1 if we're loading
-		;; data in and out of banks, and set to 0 if we're working with
+		;; data in and out of banks, and set to 1 if we're working with
 		;; files
-		ld a, (loadToBank)
-		or a
-		jr z, .initNewBank
+		ld a, (State.fileMode)
+		and a
+		jr nz, .initNewBank
 
 		;; double the value as we'll get 16K bank
 		ld a, c
@@ -61,11 +59,6 @@ init:
 
 		ret
 erase:
-		;; FIXME should probably zero out the file
-		ld a, (loadToBank)			; exit if we're writing to a file
-		or a
-		ret z
-
 		ld bc, $4000				; 16k
 		ld hl, buffer
 		ld de, buffer + 1
@@ -81,9 +74,10 @@ restore:
 		ld a, (prevPageB)
 		nextreg	pageB, a
 
-		ld a, (loadToBank)
-		or a
-		jr nz, .done
+		;; if fileMode = 0 we're done, otherwise release the pages
+		ld a, (State.fileMode)
+		and a
+		jr z, .done
 
 		;; if writing to a file, we need to release the 2 pages we allocated
 		ld a, (userBank)

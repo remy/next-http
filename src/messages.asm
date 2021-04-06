@@ -25,7 +25,7 @@ fileOpen	DC "J Could not open file for writing"
 help
 		;;  12345678901234567890123456789012
 		DB NAME, " v", VERSION, " by Remy Sharp", CR
-		DB "-> GET and POST over http", CR, CR
+		DB "-> GET and POST over HTTP", CR, CR
 		DB "Synopsis:",CR
 		DB " .",NAME," get ...args",CR
 		DB " .",NAME," post ...args",CR, CR
@@ -39,8 +39,8 @@ help
 		DB "          (required with POST)",CR
 		DB "-o num*   offset in bank",CR
 		DB "-7        base64 decode",CR
-		DB "-f num*   flash border colour",CR,CR
+		DB "-v num*   flash border colour",CR,CR
 		DB "* denotes optional with defaults",CR
-		DB "FAQ: tinyurl.com/httpbank",CR,0
+		DB "FAQ: github.com/remy/next-http",CR,0
 
 	ENDMODULE
