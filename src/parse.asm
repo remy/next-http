@@ -31,10 +31,6 @@ start:
 		ld a, h : or l				; check if HL is zero
 		jr z, Parse.showHelp			; if no args, show help
 
-		;; before we search for options, we're going to prefix the
-		;; State.filename with the cwd
-		call esxDOS.fGetCwd
-
 startToken
 		ld a, (hl)
 		inc hl
@@ -138,7 +134,7 @@ parseBank:	ld de, State.bank : jr continueOption
 parseHost:	ld de, State.host : jr continueOption
 parsePort:	ld de, State.port : jr continueOption
 parseUrl:	ld de, State.url : jr continueOption
-parseFilename:	ld de, State.filename : ex de, hl : call strEnd : ex de, hl : jr continueOption
+parseFilename:	ld de, State.filename : jr continueOption
 parseLength:	ld de, State.length : jr continueOption
 parseOffset:	ld de, State.offset : jr continueOption
 parseFlashBorder:
@@ -169,7 +165,9 @@ readFromNextBASIC
 		jr z, .variableFound			; on if matches string name
 		push de
 		push bc
+		; ld sp, (Exit.SMC_stack)
 		call48k NEXT_ONE_r3			; DE=next variable
+		; ld sp, stack
 		pop bc
 		ex de, hl				; HL=next variable
 		pop de

@@ -19,7 +19,7 @@
 
 	MODULE esxDOS
 
-DefaultDrive	DB '$'          ; Because we're only opening dot commands, pre-load default as system drive
+CurrentDrive	DB '*'
 Handle		DB 255
 
 ; Open file
@@ -32,7 +32,7 @@ Handle		DB 255
 ;       A = 7   Name error - not 8.3?
 ;       A = 11  Drive not found
 fOpen:
-		ld a, (DefaultDrive)            ; get drive we're on
+		ld a, (CurrentDrive)            ; get drive we're on
 		ld b, FA_WRITE | FA_CREATE_NEW ;  FA_READ                   ; b = open mode
 		dos F_OPEN		; open read mode
 		ld (Handle), a
@@ -71,24 +71,5 @@ fClose:
 		ret z
 		dos F_CLOSE            ; close file
 		ret
-
-
-; Get current folder into FileName buffer
-;
-; Modifies: State.filename
-; Fc <- 1 if error occurs
-;
-fGetCwd:
-                push    af
-		push 	hl
-
-                ld      a,'*'
-                ld      hl, State.filename
-                dos 	F_GETCWD
-
-.end:
-                pop     hl
-		pop 	af
-                ret
 
 	ENDMODULE
