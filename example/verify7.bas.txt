@@ -1,0 +1,37 @@
+#program verify7
+1 RUN AT 3
+10 LAYER 0
+20 BANK 20 ERASE
+30 ON ERROR GO SUB 9000
+40 CLS : PRINT INVERSE 1;"HTTP 7bit bank tests"; INVERSE 0:%e=1
+145 t$="4k":%l=%$1000:u$="/12":%r=1: GO SUB 1000
+150 t$="8k":%l=%$2000:u$="/13":%r=2: GO SUB 1000
+160 t$="16k":%l=%$4000:u$="/14":%r=3: GO SUB 1000
+500 PRINT INVERSE 1;"HTTP 7bit file tests"; INVERSE 0:%e=2
+510 t$="4k":u$="/12":%r=5: GO SUB 1000
+520 t$="8k":u$="/13":%r=6: GO SUB 1000
+530 t$="16k":u$="/14":%r=7: GO SUB 1000
+540 ; t$="32k":u$="/14":%r=7: GO SUB 1000
+900 ON ERROR
+910 PRINT FLASH 1;"7bit - All OK"
+920 STOP
+1010 PRINT AT %r,0;t$+" test..."
+1020 t$=t$+".bin"
+1030 IF %e=1 THEN GO TO 7000: ; banking
+1040 REM file test logic
+1200 .http -h data.remysharp.com -u u$ -f t$ -v 6 -7
+5090 PRINT AT %r,11;"done. Verifying: "
+5100 c$=t$+" -1 -mb 20"
+5110 .$ extract c$
+5120 %i=% BANK 20 PEEK 0
+5130 GO TO 8000
+5140 REM bank testing logic
+7000 .http -h data.remysharp.com -u u$ -b 20 -v 5 -7
+7090 PRINT AT %r,11;"done. Verifying: "
+7120 %i=% BANK 20 PEEK (l-1)
+
+8000 IF %i=$FF THEN PRINT AT %r,27; INVERSE 1;"OK"; INVERSE 0: ELSE PRINT AT %r,27; FLASH 1;"BAD": PAUSE 0: STOP
+8010 RETURN
+
+9000 ON ERROR
+9050 PRINT FLASH 1;"ERROR": ERROR : PAUSE 0: STOP

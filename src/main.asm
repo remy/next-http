@@ -2,7 +2,7 @@
 	SLDOPT COMMENT WPMEM, LOGPOINT, ASSERTION
 	OPT reset --zxnext --syntax=abfw
 
-	; DEFINE TESTING
+	DEFINE TESTING
 
 	INCLUDE "version.inc.asm"
 	INCLUDE "macros.inc.asm"
@@ -16,9 +16,6 @@
 		CSPECTMAP "http.map"
 		DISPLAY "Adding jump to ",/H,testStart
 testStart:
-		; exx
-		; ld hl, $9FFF
-		; exx
 		; ld hl, testFakeArgumentsLine
 		call start
 		ret
@@ -32,7 +29,7 @@ testFakeArgumentsLine
 		; DZ "get -f demo.scr -h data.remysharp.com -u /5 -v 2"
 		; DZ "get -b 5 -o -0 -h data.remysharp.com -u /5 -v 2"
 		; DZ "get -f http-demo.tap -h zxdb.remysharp.com -u /get/18840 -v 2"
-		DZ "get -f output.bin -h 192.168.1.118 -u /output.bin -p 5000 -v 3"
+		; DZ "get -f output.bin -h 192.168.1.118 -u /output.bin -p 5000 -v 3"
 		; DZ "post -b 21 -h data.remysharp.com -u /1 -f 3 -l 16384 -7"
 
 	ENDIF

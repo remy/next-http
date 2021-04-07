@@ -1,0 +1,24 @@
+#program capture-esp
+1 RUN AT 3
+10 LAYER 0
+20 BANK 20 ERASE
+30 ON ERROR GO SUB 9000
+40 CLS : PRINT INVERSE 1;"HTTP 4k debug"; INVERSE 0
+145 t$="4k":u$="/10":%r=1: GO SUB 1000
+900 ON ERROR
+910 PRINT FLASH 1;"All OK"
+920 STOP
+1010 PRINT AT %r,0;t$+" test..."
+1020 t$=t$+".bin"
+1030 IF %e=1 THEN GO TO 7000: ; banking
+1040 REM file test logic
+1200 ../http-debug.dot -h data.remysharp.com -u u$ -f t$ -v 6
+5090 PRINT AT %r,11;"done. Verifying: "
+5100 c$=t$+" -1 -mb 20"
+5110 .$ extract c$
+5120 %i=% BANK 20 PEEK 0
+5130 SAVE "4k-esp-bank.bin" BANK 20,%$2000,%$2000
+8000 IF %i=$FF THEN PRINT AT %r,27; INVERSE 1;"OK"; INVERSE 0: ELSE PRINT AT %r,27; FLASH 1;"BAD": PAUSE 0: STOP
+8010 RETURN
+9000 ON ERROR
+9050 PRINT FLASH 1;"ERROR": ERROR : PAUSE 0: STOP

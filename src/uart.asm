@@ -64,19 +64,34 @@ read:
 		ld bc, UART_RxD
 		in a, (c)
 	IFDEF TESTING
-		;; write to the debug bank - $A000
-		push hl
-		ld hl, (Bank.debug)
-		ld (hl), a
-		inc hl
-		ld (Bank.debug), hl
-		pop hl
+		call debug
 	ENDIF
 		call Border
 		ret
 .checkTimeout
 		call CheckESPTimeout
 		jr .wait
+
+	IFDEF TESTING
+debug:
+		;; write to the debug bank - $A000 and no further
+		push hl
+		push af
+		ld hl, (Bank.debug)
+		ld a, h
+		cp $c0
+		jr z, .outOfMemory
+		pop af
+		ld (hl), a
+		inc hl
+		ld (Bank.debug), hl
+		pop hl
+		ret
+.outOfMemory
+		pop af
+		pop hl
+		ret
+	ENDIF
 
 ; A = byte to write
 ; Modifies: BC, DE
@@ -87,13 +102,7 @@ write:
 		call InitESPTimeout
 		ld d, a
 	IFDEF TESTING
-		;; write to the debug bank - $A000
-		push hl
-		ld hl, (Bank.debug)
-		ld (hl), a
-		inc hl
-		ld (Bank.debug), hl
-		pop hl
+		call debug
 	ENDIF
 
 		ld bc, UART_GetStatus

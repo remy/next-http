@@ -53,9 +53,13 @@ init:
 		ld (userBank), a
 		nextreg	pageA, a ; set bank to A
 
+	IFDEF TESTING
+		ld a, $29	; 2nd half of bank 20 @ $2000
+	ELSE
 		call allocPage
+	ENDIF
 		ld (userBank+1), a
-		nextreg	pageB, a ; set bank to A
+		nextreg	pageB, a ; set bank to B
 
 		ret
 erase:
@@ -84,9 +88,13 @@ restore:
 		ld e, a
 		call freePage
 
+		;; only release the 2nd page if we're not testing - if we're
+		;; testing then this preserves 2nd part of bank 20
+	IFNDEF TESTING
 		ld a, (userBank+1)
 		ld e, a
 		call freePage
+	ENDIF
 
 .done
 		pop af
