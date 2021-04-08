@@ -14,7 +14,7 @@
 540 ; t$="32k":u$="/14":%r=7: GO SUB 1000
 900 ON ERROR
 910 PRINT FLASH 1;"7bit - All OK"
-920 STOP
+920 PAUSE 0: STOP
 1010 PRINT AT %r,0;t$+" test..."
 1020 t$=t$+".bin"
 1030 IF %e=1 THEN GO TO 7000: ; banking

@@ -23,16 +23,21 @@ init:
 	call Uart.init
 	EspCmdOkErr "ATE0"
 	jr c, .initError
+
+	EspCmdOkErr "AT+CIPSERVER=0"
 	EspCmdOkErr "AT+CIPCLOSE" ; Close if there some connection was. Don't care about result
 	EspCmdOkErr "AT+CIPMUX=0" ; Single connection mode
 	jr c, .initError
+
+	EspCmdOkErr "AT+CIPDINFO=0" ; Disable additional info
+    	jr c, .initError
 
 	and a
 	ret
 .initError
 	call RetartESP
 	jr c, .failed
-	jr Wifi.init
+	jp Wifi.init
 .failed
 	ld hl, Err.wifiInit
 	scf
@@ -486,7 +491,7 @@ getPacket:
 	call esxDOS.fWrite
 	pop de
 	pop hl
-	ld de, (Bank.buffer)
+	ld de, Bank.buffer
 
 .skipWriteToFile
 	ex de, hl				; update the tip of our result buffer

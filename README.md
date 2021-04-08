@@ -2,7 +2,7 @@
 
 A utility for application developers to talk to web servers to exchange blocks of data, such as high scores, game progress. The `.http` dot command can also download and save to files over the web.
 
-Usage:
+## Usage
 
 ```
 ; Send 1024 bytes from bank 22 to http://192.168.1.100:8080/send
@@ -70,32 +70,12 @@ I've written a number of [example servers](https://github.com/remy/next-http/tre
 - I've noticed when using Cspect's emulation, if the host can't be reached, Cspect will hang indefinitely.
 - When using the `offset` you are constrained to 16K, so if the offset is 8,192, then the max length is also 8,192 (there's no error checking on this currently)
 
-## Not supported / future
+## Not supported / potential future
 
+- 7bit / cspect emulated ESP support for file saving isn't working (yet)
 - http chunked encoding (just make sure your server isn't sending chunked encoding)
 - Support length on GET
-
-## Debugging and problems
-
-This repo also includes a debug build of `http`. The difference is that it will add all the ESP read and write to the second half of the bank you use. This way you can debug from the real hardware and capture exactly what's going on.
-
-**Important** the debug dot command uses the second half of the bank you use, so ideally test with less than 8K to help debugging.
-
-If you need to file an issue, this information is extremely valuable for debugging - and if you're not comfortable including the file in [an issue](https://github.com/remy/next-http/issues/new) as an attachment, you can email me directly at remy@remysharp.com. To capture this, run:
-
-```
-10 ../http-debug.dot -h example.com -u / -b 20
-20 SAVE "http-debug.bin" BANK 20
-```
-
-Then include the `http-debug.bin` that was saved on  your Next to help debug the issue.
-
-### Notes on http-debug.dot
-
-1. Does not erase the bank
-2. The contents of the `State` structure (in `state.asm`) are written to the 2nd half of the bank, i.e. the second 8K page
-3. After the `State` object, around 519 bytes later, the ESP exchange are stored, including the AT commands and ESP raw response.
-4. `Wifi.getPacket` writes to the end of the bank with the `IX` register state as a stack like array - this is to debug the final parsing of the base64 encoded packet
+- File POST and offsets in file saving
 
 ## Error codes
 
@@ -119,11 +99,39 @@ Then include the `http-debug.bin` that was saved on  your Next to help debug the
 - `I` Filename or bank must be specified (command is missing the `-b` or `-f` argument)
 - `J` Could not open file for writing
 
-## Development
+## Testing
 
-- Uses [sjasmplus](https://z00m128.github.io/sjasmplus/documentation.html) from VS Code task
-- Follows this [code convention](https://github.com/remy/z80-code-conventions)
-- Entry point is main.asm
+Assuming that `http` is in your `/dot/` directory, there are two verification programs in the [example](https://github.com/remy/next-http/tree/main/example) folder. Download [verify.bas](https://github.com/remy/next-http/blob/main/example/verify.bas) and run it and if it succeeds you'll see the following screen:
+
+![](https://user-images.githubusercontent.com/13700/114017829-68f57380-9864-11eb-9590-71cad0e4c4a1.png)
+
+If any of the sections fail however, there is a debug script available in [capture-esp.bas](https://github.com/remy/next-http/blob/main/example/capture-esp.bas) which uses [`http-debug.dot`](https://github.com/remy/next-http/blob/main/http-debug.dot) in the **same** directory as capture-esp.bas.
+
+The `capture-esp.bas` will test a simple 4K file and generate `4k-esp-bank.bin` in the same working directory which contains full debug exchange between your machine and the ESP chip uses to send data. If you share that file with me either [via issues](https://github.com/remy/next-http/issues/new) or via [email](mailto:remy@remysharp.com) I can use it to debug.
+
+
+## Debugging and problems
+
+This repo also includes a debug build of `http`. The difference is that it will add all the ESP read and write to the second half of the bank you use. This way you can debug from the real hardware and capture exactly what's going on.
+
+**Important** the debug dot command uses the second half of the bank you use, so ideally test with less than 8K to help debugging.
+
+If you need to file an issue, this information is extremely valuable for debugging - and if you're not comfortable including the file in [an issue](https://github.com/remy/next-http/issues/new) as an attachment, you can email me directly at remy@remysharp.com. To capture this, run:
+
+```
+10 ../http-debug.dot -h example.com -u / -b 20
+20 SAVE "http-debug.bin" BANK 20
+```
+
+Then include the `http-debug.bin` that was saved on  your Next to help debug the issue.
+
+### Notes on http-debug.dot
+
+1. Does not erase the bank
+2. The contents of the `State` structure (in `state.asm`) are written to the 2nd half of the bank, i.e. the second 8K page
+3. After the `State` object, around 519 bytes later, the ESP exchange are stored, including the AT commands and ESP raw response.
+4. `Wifi.getPacket` writes to the end of the bank with the `IX` register state as a stack like array - this is to debug the final parsing of the base64 encoded packet
+
 
 ## With special thanks to
 
@@ -131,6 +139,12 @@ Then include the `http-debug.bin` that was saved on  your Next to help debug the
 - [Robin Verhagen-Guest](https://github.com/Threetwosevensixseven/NXtel) - via nxtp and nxtel source code
 - [Peter Ped Helcmanovsky](https://github.com/ped7g/) - via dot commands and answering endless questions on discord
 - [David Saphier](https://github.com/em00k/) - for starting and inspiring full "save to file" support
+
+## Development
+
+- Uses [sjasmplus](https://z00m128.github.io/sjasmplus/documentation.html) from VS Code task
+- Follows this [code convention](https://github.com/remy/z80-code-conventions)
+- Entry point is main.asm
 
 ## License
 
