@@ -18,6 +18,7 @@ borderError	DC "G Border out of range 0-7"
 hostError	DC "H Host required"
 noFileOrBank	DC "I Filename or bank must be specified"
 fileOpen	DC "J Could not open file for writing"
+contentLength	DC "K Content length error"
 	ENDMODULE
 
 	MODULE Msg

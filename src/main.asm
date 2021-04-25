@@ -29,7 +29,7 @@ testFakeArgumentsLine
 		; DZ "get -f demo.scr -h data.remysharp.com -u /5 -v 2"
 		; DZ "get -b 5 -o -0 -h data.remysharp.com -u /5 -v 2"
 		; DZ "get -f http-demo.tap -h zxdb.remysharp.com -u /get/18840 -v 2"
-		; DZ "get -f output.bin -h 192.168.1.118 -u /output.bin -p 5000 -v 3"
+		; DZ "get -f 4k.bin -h data.remysharp.com -u /10 -v 3"
 		; DZ "post -b 21 -h data.remysharp.com -u /1 -f 3 -l 16384 -7"
 
 	ENDIF
@@ -309,10 +309,19 @@ Get
 LoadPackets
 		call Wifi.getPacket
 
-		ld a, (Wifi.closed)
-		and a
-		jr nz, Exit
+		;; reduce the content length left to read
+		ld de, (Wifi.bufferLength)
+		call Headers.contentLengthSub
+		ld hl, (Headers.contentLength)
+		jr nz, .continue
+		jr c, .contentLenghtError
 
+		;; FIXME this is lazy coding
+		call Wifi.closeTCP
+		ld hl, Wifi.closed
+		ld (hl), 1
+
+.continue
 		;; now write to file if required
 		ld a, (State.fileMode)
 		cp WRITE_TO_FILE
@@ -323,7 +332,16 @@ LoadPackets
 		ld bc, (Wifi.bufferLength)
 		call esxDOS.fWrite
 .skipFileWrite
+
+		ld a, (Wifi.closed)
+		and a
+		jr nz, Exit
+
 		jr LoadPackets
+
+.contentLenghtError:
+		ld hl, Err.contentLength
+		jp Error
 
 ; HL = pointer to error string
 Error
@@ -364,7 +382,6 @@ Exit
 	INCLUDE "bank.asm"
 	INCLUDE "file.asm"
 	INCLUDE "parse.asm"
-	INCLUDE "strings.asm"
 	INCLUDE "base64.asm"
 	INCLUDE "headers.asm"
 
@@ -397,8 +414,8 @@ diagBinPcLo 	EQU ((100*diagBinSz)%8192)*10/8192
 		IFDEF LAUNCH_CSPECT : IF ((_ERRORS = 0) && (_WARNINGS = 0))
 			;; delete any autoexec.bas
 			SHELLEXEC "(hdfmonkey rm /Applications/cspect/app/cspect-next-2gb.img /nextzxos/autoexec.bas > /dev/null) || exit 0"
-			SHELLEXEC "hdfmonkey put /Applications/cspect/app/cspect-next-2gb.img http-debug.dot /dot/http"
-			SHELLEXEC "mono /Applications/cspect/app/cspect.exe -r -w5 -basickeys -zxnext -nextrom -exit -brk -tv -mmc=/Applications/cspect/app/cspect-next-2gb.img -map=./http.map -sd2=/Applications/cspect/app/empty-32mb.img";  -com='/dev/tty.wchusbserial1420:11520'"
+			SHELLEXEC "hdfmonkey put /Applications/cspect/app/cspect-next-2gb.img http-debug.dot /devel/http-debug.dot"
+			SHELLEXEC "mono /Applications/cspect/app/cspect.exe -r -w5 -basickeys -zxnext -nextrom -exit -brk -tv -mmc=/Applications/cspect/app/cspect-next-2gb.img -map=./http.map -sd2=/Applications/cspect/app/empty-32mb.img  -com='/dev/tty.wchusbserial1430:11520'"
 		ENDIF : ENDIF
 		DISPLAY "TEST BUILD"
 	ENDIF

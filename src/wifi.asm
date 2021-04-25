@@ -68,6 +68,10 @@ RetartESP:
 	ret
 
 
+closeTCP
+	EspCmdOkErr "AT+CIPCLOSE"
+	ret
+
 ; HL - host pointer
 ; DE - port pointer
 openTCP:
@@ -380,14 +384,9 @@ getPacket:
 	ld a, (firstRead)
 	and a : jr z, .headerProcessed
 
-.searchForBlankLine
-	;; since we're reading HTTP responses, the header isn't interesting to
-	;; us so we'll look for \n\r\n\r in a row
-	call Uart.read : dec de : cp CR : jr nz, .searchForBlankLine
-	call Uart.read : dec de ; LR
-	call Uart.read : dec de : cp CR : jr nz, .searchForBlankLine
-	call Uart.read : dec de ; LR
-
+.processHeader
+	;; we're searching for "content-length:"
+	call Headers.findContentLength
 
 	ld a, 0
 	ld (firstRead), a
@@ -415,28 +414,6 @@ getPacket:
 	ld a, ixh
 	add de, a
 
-; 	IFDEF TESTING
-; 		and a
-; 		call nz, .captureIXState
-; 		jr .readp
-; .captureIXState
-; 		ld iyh, d
-; 		ld iyl, e
-; 		exx
-; 		ld a, ixh
-; 		ld (hl), a
-; 		dec hl
-
-; 		ld d, iyh
-; 		ld e, iyl
-
-; 		ld (hl), e
-; 		dec hl
-; 		ld (hl), d
-; 		dec hl
-; 		exx
-; 		ret
-; 	ENDIF
 .readp
 	ld a, h
 	cp HIGH Bank.buffer
