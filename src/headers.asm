@@ -42,16 +42,12 @@ result:
 
 
 	MODULE Headers
-
-	DEFB $AA
 contentLength:						; 32bit result
 	DISPLAY "Header.contentLength @ ",/H,$
-	DWORD 0
-
-	DEFB $AA
-buffer:
+		DWORD 0
+tmpBuffer:
 	DISPLAY "Header.buffer @ ",/H,$
-	BLOCK 9, 0
+		BLOCK 9, 0
 
 ; Subtracts DE from contentLength
 ;
@@ -89,7 +85,7 @@ contentLengthSub:
 ; Fc=failed to find header
 ; Modifies: AF, BC, DE, HL, IX
 findContentLength
-		ld hl, buffer
+		ld hl, tmpBuffer
 
 		;; process a single header
 .processHeader
@@ -177,11 +173,26 @@ findContentLength
 
 .convertToUint32
 		push de
-		ld de, buffer
+		ld de, tmpBuffer
 		call atoui32
-		; CSP_BREAK
 		ld (contentLength), ix
 		ld (contentLength+2), hl
+
+		;; Now we have the content length both as text and as a numeric
+		;; we also need to do some prep calculations for writing to disk
+		;; so we do this now.
+		ld a, h
+		ld c, l					; ACIX=dividend
+		ld de, $2000
+
+		call Div32By16
+
+		ld a, ixh
+		;; TODO if A != 0 then bail - way too big (or disable rolling)
+		ld a, ixl
+		ld (Bank.pagesRequired), a
+		ld (Bank.lastPageSize), hl
+
 		pop de
 		jp .slurpToEndOfAllHeaders
 

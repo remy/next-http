@@ -2,7 +2,7 @@
 	SLDOPT COMMENT WPMEM, LOGPOINT, ASSERTION
 	OPT reset --zxnext --syntax=abfw
 
-	; DEFINE TESTING
+	DEFINE TESTING
 
 	INCLUDE "version.inc.asm"
 	INCLUDE "macros.inc.asm"
@@ -16,7 +16,7 @@
 		CSPECTMAP "http.map"
 		DISPLAY "Adding jump to ",/H,testStart
 testStart:
-		; ld hl, testFakeArgumentsLine
+		ld hl, testFakeArgumentsLine
 		call start
 		ret
 testFakeArgumentsLine
@@ -31,6 +31,8 @@ testFakeArgumentsLine
 		; DZ "get -f http-demo.tap -h zxdb.remysharp.com -u /get/18840 -v 2"
 		; DZ "get -f 4k.bin -h data.remysharp.com -u /10 -v 3"
 		; DZ "post -b 21 -h data.remysharp.com -u /1 -f 3 -l 16384 -7"
+		; DZ "get -h data.remysharp.com -u /11 -f 48k.bin"
+		DZ "get -h zxdb.remysharp.com -u /get/25485 -f targetr.tap -v 2"
 
 	ENDIF
 
@@ -79,7 +81,7 @@ init:
 		jr z, .noBorder
 
 		call StringToNumber16
-		jr c, borderError
+		jp c, borderError
 		ld a, l
 		scf					; set carry as we're looking for > 7
 		cp 8
@@ -99,6 +101,10 @@ init:
 		ld a, (de)
 		and a
 		jr z, .useFiles
+
+		;; disable bank rolling because we're not using files
+		xor a
+		ld (Bank.rollingActive), a
 
 		call StringToNumber16
 		jr c, bankError
@@ -327,21 +333,36 @@ LoadPackets
 		cp WRITE_TO_FILE
 		jr nz, .skipFileWrite
 
+		ld a, (Bank.rollingActive)
+		and a
+		jr nz, .skipFileWrite
+
 		ld hl, Bank.buffer			; HL = starting point
 		ld (Wifi.bufferPointer), hl		; reset the wifi buffer at the same time
 		ld bc, (Wifi.bufferLength)
 		call esxDOS.fWrite
-.skipFileWrite
 
+.skipFileWrite
 		ld a, (Wifi.closed)
 		and a
-		jr nz, Exit
+		jr nz, PreExitCheck
 
 		jr LoadPackets
 
 .contentLenghtError:
 		ld hl, Err.contentLength
 		jp Error
+
+PreExitCheck
+		ld a, (State.fileMode)
+		cp WRITE_TO_FILE
+		jr nz, Exit
+
+		;; Now work through banks and write to file
+		;; we can do it forward from the start of the stack
+		call Bank.flushBanksToDisk
+
+		jr Exit
 
 ; HL = pointer to error string
 Error
@@ -415,7 +436,7 @@ diagBinPcLo 	EQU ((100*diagBinSz)%8192)*10/8192
 			;; delete any autoexec.bas
 			SHELLEXEC "(hdfmonkey rm /Applications/cspect/app/cspect-next-2gb.img /nextzxos/autoexec.bas > /dev/null) || exit 0"
 			SHELLEXEC "hdfmonkey put /Applications/cspect/app/cspect-next-2gb.img http-debug.dot /devel/http-debug.dot"
-			SHELLEXEC "mono /Applications/cspect/app/cspect.exe -r -w5 -basickeys -zxnext -nextrom -exit -brk -tv -mmc=/Applications/cspect/app/cspect-next-2gb.img -map=./http.map -sd2=/Applications/cspect/app/empty-32mb.img  -com='/dev/tty.wchusbserial1430:11520'"
+			SHELLEXEC "mono /Applications/cspect/app/cspect.exe -r -w5 -basickeys -zxnext -nextrom -exit -brk -tv -mmc=/Applications/cspect/app/cspect-next-2gb.img -map=./http.map -sd2=/Applications/cspect/app/empty-32mb.img -com='/dev/tty.wchusbserial1430:11520'"
 		ENDIF : ENDIF
 		DISPLAY "TEST BUILD"
 	ENDIF

@@ -51,6 +51,7 @@ parseOption
 
 		;; flag based args
 		cp '7' : jr z, parse7bit
+		cp 'r' : jr z, parseDisableBankRoll
 
 		call checkForEnd
 		jr z, parseError
@@ -104,6 +105,10 @@ parse7bit:
 
 		jr startToken
 
+parseDisableBankRoll:
+		xor a
+		ld (Bank.rollingActive), a
+		jp startToken
 continueOption:
 		ld (currentOption), de			; required for NextBASIC replacement
 		ld a, b

@@ -82,15 +82,15 @@ debug:
 		push af
 		ld hl, (Bank.debug)
 		ld a, h
-		cp $c0
-		jr z, .outOfMemory
+		bit 7,h
+		jr nz, .outOfDebugMemory
 		pop af
 		ld (hl), a
 		inc hl
 		ld (Bank.debug), hl
 		pop hl
 		ret
-.outOfMemory
+.outOfDebugMemory
 		pop af
 		pop hl
 		ret

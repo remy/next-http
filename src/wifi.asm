@@ -211,7 +211,6 @@ tcpSendEncodedBufferFrame:
 	cp 4
 	jp nz, .sendEncodedBuffer		; only apply padding *right* at the end
 
-	; CSP_BREAK
 	;; work out how much padding is required now we're at the end
 	ld a, (State.padding)
 	and a
@@ -416,8 +415,10 @@ getPacket:
 
 .readp
 	ld a, h
-	cp HIGH Bank.buffer
-	jr c, .skipbuff
+	bit 6, h
+
+	;; we'e gotten up to $c000
+	jr nz, .outOfMemory
 
 	;; read UART into A
 	push bc
@@ -497,6 +498,19 @@ getPacket:
 	jr nz, .readp
 	ld (bufferPointer), hl
 	ret
+
+.outOfMemory
+	ld a, (Bank.rollingActive)
+	and a
+	jr z, .skipbuff
+
+	;; since we're rolling, we allocate a new bank, and reset the
+	;; bufferpointer value
+	call Bank.allocateRollingBank
+	ld hl, Bank.buffer
+	ld (bufferPointer), hl
+	jr .readp
+
 .skipbuff
 	push bc
 	call Uart.read

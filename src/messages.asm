@@ -19,6 +19,7 @@ hostError	DC "H Host required"
 noFileOrBank	DC "I Filename or bank must be specified"
 fileOpen	DC "J Could not open file for writing"
 contentLength	DC "K Content length error"
+outOfMemory	DC "L Out of memory: try with '-r' to disable rolling banks"
 	ENDMODULE
 
 	MODULE Msg
@@ -33,6 +34,7 @@ help
 		DB "Args:",CR
 		DB "-b num*   bank to use",CR
 		DB "-f str*   filename",CR
+		DB "-r        disable rolling banks",CR
 		DB "-h str    host address",CR
 		DB "-p num*   port",CR
 		DB "-u str*   url",CR

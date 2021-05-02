@@ -138,6 +138,40 @@ strEnd:
                 pop     af
                 ret
 
+
+; via https://wikiti.brandonw.net/index.php?title=Z80_Routines:Math:Division#32.2F16_division
+; ACIX = dividend
+; DE = divisor
+; ACIX <- quotient
+; DE <- divisor
+; HL <- remainder
+; B <- 0
+Div32By16:
+		ld	hl,0
+		ld	b,32
+.loop:
+		add	ix,ix
+		rl	c
+		rla
+		adc	hl,hl
+		jr	c,.overflow
+		sbc	hl,de
+		jr	nc,.setbit
+		add	hl,de
+		djnz	.loop
+		ret
+.overflow:
+		or	a
+		sbc	hl,de
+.setbit:
+		inc ixl
+		djnz	.loop
+		ret
+
+
+; DE = base 10 number buffer
+; HLIX <- 32bit value
+; Modifies: BC, DE, AF
 atoui32:
 ;===============================================================
 ;Input:

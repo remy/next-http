@@ -3,16 +3,30 @@
 prevPageA	DEFB 0
 prevPageB	DEFB 0
 userBank	DEFB 0,0
-
+pagesRequired	DEFB 0
+lastPageSize	DEFW 0
 pageA		EQU MMU4_8000_NR_54
 pageB		EQU MMU5_A000_NR_55
-
 		;; NOTE: MMU3/5 are safe from being paged out when making
 		;; NextZXOS calls (unlike MMU0/1/6/7)
 
+		;; Note that although I'm blocking out 224 (potential) pages
+		;; the reality is that, even with a 2mb machine, that a good
+		;; number of these will already be reserved by the system.
+
+poolSize	EQU 224
+		;; TODO: add some protection for when in some future, there's a
+		;; 4mb spectrum next...
+		ALIGN 256
+pool		BLOCK poolSize,0
+rolling		DW pool				; use bank rolling by default for file saving
+rollingActive	EQU $-1
+
 buffer		EQU $8000
 	IFDEF TESTING
-debug		DW $A000
+prevDebugPage	DEFB 0
+debugPage	EQU MMU6_C000_NR_56
+debug		DW $C000
 	ENDIF
 
 ; C <- 16K bank number to use as active bank
@@ -27,6 +41,14 @@ init:
 		ld (prevPageA), a
 		NextRegRead pageB
 		ld (prevPageB), a
+
+
+	IFDEF TESTING
+		NextRegRead debugPage
+		ld (prevDebugPage), a
+		call allocPage
+		nextreg	debugPage, a ; set bank to A
+	ENDIF
 
 		pop bc
 
@@ -49,19 +71,9 @@ init:
 		ret
 
 .initNewBank
-		call allocPage
-		ld (userBank), a
-		nextreg	pageA, a ; set bank to A
-
-	IFDEF TESTING
-		ld a, $29	; 2nd half of bank 20 @ $2000
-	ELSE
-		call allocPage
-	ENDIF
-		ld (userBank+1), a
-		nextreg	pageB, a ; set bank to B
-
+		call allocateRollingBank
 		ret
+
 erase:
 		ld bc, $4000				; 16k
 		ld hl, buffer
@@ -72,6 +84,15 @@ erase:
 
 restore:
 		push af					; protect the F flags
+
+		;; only release the 2nd page if we're not testing - if we're
+		;; testing then this preserves 2nd part of bank 20
+	IFNDEF TESTING
+		NextRegRead debugPage
+		call freePage
+		ld a, (prevDebugPage)
+		nextreg	debugPage, a
+	ENDIF
 
 		ld a, (prevPageA)
 		nextreg	pageA, a
@@ -85,16 +106,7 @@ restore:
 
 		;; if writing to a file, we need to release the 2 pages we allocated
 		ld a, (userBank)
-		ld e, a
 		call freePage
-
-		;; only release the 2nd page if we're not testing - if we're
-		;; testing then this preserves 2nd part of bank 20
-	IFNDEF TESTING
-		ld a, (userBank+1)
-		ld e, a
-		call freePage
-	ENDIF
 
 .done
 		pop af
@@ -102,6 +114,8 @@ restore:
 
 
 ;; via Matt Davies — 30/03/2021
+; A <- 8k bank number
+; Fc <- if out of memory
 allocPage:
                 push    ix
                 push    bc
@@ -147,6 +161,102 @@ freePage:
                 pop     ix
                 pop     af
                 ret
+
+; Writes all the banks used in the rolling bank method to SD card all in one go
+;
+; Modifies: HL, BC, AF, DE, IX
+flushBanksToDisk:
+		ld hl, pool
+		ld a, (pagesRequired)
+		ld d, a
+
+		;; if BC > 0 then we need pagesRequired + 1
+		ld bc, (Bank.lastPageSize)
+		ld a, b
+		or c
+		jr z, .exactPageSize
+		inc d
+.exactPageSize
+		ld a, d				; Now copy into A and other
+		ld b, a				; registers for loop prep
+		ld c, a
+
+		CSP_BREAK
+
+		;; we allocate pages in pairs, so we need to make sure
+		;; we're releasing an even number of pages - so if A is odd
+		;; add 1 to the loop counter
+		bit 0, a
+		jr z, .loop
+		inc b
+.loop
+		ld a, (hl)
+		nextreg	pageA, a		; load page into $8000
+
+		push af
+		push bc
+		push hl
+
+		ld hl, buffer			; HL = starting point
+		;; if C = 0, then don't write
+		ld a, c
+		and a
+		jr z, .dealloc
+
+		;; if C == 1 then BC = Bank.lastPageSize
+		cp 1
+		jr z, .lastPage
+		ld bc, $2000
+		jr .write
+.lastPage
+		ld bc, (Bank.lastPageSize)
+
+.write
+		call esxDOS.fWrite
+
+.dealloc
+		;; release the page - light version of freePage
+                ld e, a             		; E = page #
+                ld hl, $0003        		; Deallocate function from normal memory
+                call allocPage.callP3dos
+
+		pop hl
+		pop bc
+		pop af
+
+		inc l
+		dec c
+		djnz .loop
+		ret
+
+
+; Allocates two 8K pages at a time then puts them in our MMU 4 & 5
+;
+; Modifies: HL, AF
+allocateRollingBank:
+		ld hl, (rolling)			; HL = points to base of the pool
+
+		call allocPage
+		jr c, .outOfMemory
+		ld (userBank), a
+		nextreg	pageA, a
+		ld (hl), a
+		inc l
+
+		call allocPage
+		jr c, .outOfMemory
+		ld (userBank), a
+		nextreg	pageB, a ; set bank to A
+		ld (hl), a
+		inc l
+
+		ld (rolling), hl
+		ret
+
+.outOfMemory
+		ld hl, Err.outOfMemory
+		jp Error
+
 
 	ENDMODULE
 
