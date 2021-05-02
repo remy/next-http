@@ -453,25 +453,6 @@ getPacket:
 	ld c, a
 	ldir
 
-	;; if we're base64 decoding AND writing to a file, then let's go to town
-	ld a, (State.fileMode)
-	cp FILE_AND_ENCODING
-	jp nz, .skipWriteToFile
-
-	;; so... this is going to be "slow" compared to all other usage because
-	;; we're writing 4 bytes at a time to "disk", but this is _only_ for the
-	;; encoded 7-bit method, which is more of a hack to support cspect in
-	;; it's emulated esp mode, which frankly I probably shouldn't do anyway.
-	push hl
-	push de
-	ld bc, 3
-	ld hl, Base64.output
-	call esxDOS.fWrite
-	pop de
-	pop hl
-	ld de, Bank.buffer
-
-.skipWriteToFile
 	ex de, hl				; update the tip of our result buffer
 	ld (bufferPointer), hl			; save
 	ld de, Base64.buffer-1			; reset DE to the start of the buffer (-1 because it'll immediately increment)
@@ -502,7 +483,7 @@ getPacket:
 .outOfMemory
 	ld a, (Bank.rollingActive)
 	and a
-	jr z, .skipbuff
+	jr z, .skipSavingBuffer
 
 	;; since we're rolling, we allocate a new bank, and reset the
 	;; bufferpointer value
@@ -511,21 +492,21 @@ getPacket:
 	ld (bufferPointer), hl
 	jr .readp
 
-.skipbuff
+.skipSavingBuffer
 	push bc
 	call Uart.read
 	pop bc
 	dec bc
 	ld a, b
 	or c
-	jr nz, .skipbuff
+	jr nz, .skipSavingBuffer
 	ret
 
 .slurp
 	;; HL contains the length of bytes from ESP
 	ld b, h
 	ld c, l
-	jr .skipbuff
+	jr .skipSavingBuffer
 
 
 .count_ipd_length

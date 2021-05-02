@@ -52,7 +52,7 @@ init:
 
 		pop bc
 
-		;; check the bank init method, `loadToBank` = 1 if we're loading
+		;; check the bank init method, `fileMode` = 0 if we're loading
 		;; data in and out of banks, and set to 1 if we're working with
 		;; files
 		ld a, (State.fileMode)
@@ -87,7 +87,7 @@ restore:
 
 		;; only release the 2nd page if we're not testing - if we're
 		;; testing then this preserves 2nd part of bank 20
-	IFNDEF TESTING
+	IFDEF TESTING
 		NextRegRead debugPage
 		call freePage
 		ld a, (prevDebugPage)
@@ -170,18 +170,16 @@ flushBanksToDisk:
 		ld a, (pagesRequired)
 		ld d, a
 
-		;; if BC > 0 then we need pagesRequired + 1
-		ld bc, (Bank.lastPageSize)
-		ld a, b
-		or c
-		jr z, .exactPageSize
+		;; this is a bit weird, but it ensures that we capture all the
+		;; pages to the sd card - in some cases we'll do a final write
+		;; of zero bytes to the storage (a waste of cpu cycles) but
+		;; this also simplifies logic and protects us from lossing the
+		;; last page of data.
 		inc d
 .exactPageSize
 		ld a, d				; Now copy into A and other
 		ld b, a				; registers for loop prep
 		ld c, a
-
-		CSP_BREAK
 
 		;; we allocate pages in pairs, so we need to make sure
 		;; we're releasing an even number of pages - so if A is odd

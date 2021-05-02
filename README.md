@@ -72,7 +72,7 @@ I've written a number of [example servers](https://github.com/remy/next-http/tre
 
 ## Not supported / potential future
 
-- 7bit / cspect emulated ESP support for file saving isn't working (yet)
+- 7bit / cspect emulated ESP support for file saving isn't supported (yet)
 - http chunked encoding (just make sure your server isn't sending chunked encoding)
 - Support length on GET
 - File POST and offsets in file saving
@@ -98,6 +98,8 @@ I've written a number of [example servers](https://github.com/remy/next-http/tre
 - `H` Hostname is required
 - `I` Filename or bank must be specified (command is missing the `-b` or `-f` argument)
 - `J` Could not open file for writing
+- `K` Could not read the http content length header correctly
+- `L` Out of memory to buffer file download: try with `-r` to disable rolling banks
 
 ## Testing
 

@@ -2,7 +2,7 @@
 	SLDOPT COMMENT WPMEM, LOGPOINT, ASSERTION
 	OPT reset --zxnext --syntax=abfw
 
-	DEFINE TESTING
+	; DEFINE TESTING
 
 	INCLUDE "version.inc.asm"
 	INCLUDE "macros.inc.asm"
@@ -20,19 +20,23 @@ testStart:
 		call start
 		ret
 testFakeArgumentsLine
-		;; test:
-		; DZ "get -b 20 -h 192.168.1.118 -p 8000 -u /demo.txt"
+		;; bank based tests
 		; DZ "post -b 21 -h data.remysharp.com -u /1 -f 3 -l 2048"
 		; DZ "post -b 21 -h data.remysharp.com -u /1 -f 3 -l 5000"
 		; DZ "post -b 21 -h data.remysharp.com -u /1 -f 4 -l 5000 -7"
-		; DZ "get -b 5 -h data.remysharp.com -u /2 -7 -o -0 -f 3"
-		; DZ "get -f demo.scr -h data.remysharp.com -u /5 -v 2"
-		; DZ "get -b 5 -o -0 -h data.remysharp.com -u /5 -v 2"
+		; DZ "post -b 21 -h data.remysharp.com -u /1 -f 3 -l 16384 -7"
+
+		; DZ "get -b 5 -h data.remysharp.com -u /2 -7 -o -0 -f 3" ; screen$
+		; DZ "get -b 5 -o -0 -h data.remysharp.com -u /5 -v 2" ; screen$
+		; DZ "get -b 20 -h data.remysharp.com -u /8 -v 2" ; 8K
+
+		;; file based tests
+		; DZ "get -f 8k.bin -h data.remysharp.com -u /8 -v 2" ; 8K
+		; DZ "get -h data.remysharp.com -u /11 -f 48k.bin"
+		; DZ "get -f demo.scr -h data.remysharp.com -u /5 -v 2" ; screen$
 		; DZ "get -f http-demo.tap -h zxdb.remysharp.com -u /get/18840 -v 2"
 		; DZ "get -f 4k.bin -h data.remysharp.com -u /10 -v 3"
-		; DZ "post -b 21 -h data.remysharp.com -u /1 -f 3 -l 16384 -7"
-		; DZ "get -h data.remysharp.com -u /11 -f 48k.bin"
-		DZ "get -h zxdb.remysharp.com -u /get/25485 -f targetr.tap -v 2"
+		DZ "get -h zxdb.remysharp.com -u /get/25485 -f targetr.tap -v 3"
 
 	ENDIF
 
@@ -40,6 +44,8 @@ start:
 	DISPLAY "Start @ ",/H,$
 		jr init
 
+		;; leaving this in makes it easier to debug versions
+		DB NAME, "@", VERSION, 0
 bankError:
 		ld hl, Err.bankError
 		jp Error
@@ -356,12 +362,13 @@ LoadPackets
 PreExitCheck
 		ld a, (State.fileMode)
 		cp WRITE_TO_FILE
-		jr nz, Exit
+		jr nz, .cleanExit
 
 		;; Now work through banks and write to file
 		;; we can do it forward from the start of the stack
 		call Bank.flushBanksToDisk
-
+.cleanExit
+		and a					; clear carry for exit
 		jr Exit
 
 ; HL = pointer to error string
