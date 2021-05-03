@@ -101,7 +101,7 @@ findContentLength
 		;; narrow down what we're looking for, ref:
 		;; https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers
 		cp 'C'
-		jr nz, .TestForLineEndingHeader
+		jp nz, .TestForLineEndingHeader
 
 		;; slurp to the `-` character
 .findDash
@@ -178,6 +178,10 @@ findContentLength
 		ld (contentLength), ix
 		ld (contentLength+2), hl
 
+		ld a, (Bank.rollingActive)
+		and a
+		jr z, .doneWithContentLengthChecks
+
 		;; Now we have the content length both as text and as a numeric
 		;; we also need to do some prep calculations for writing to disk
 		;; so we do this now.
@@ -187,12 +191,28 @@ findContentLength
 
 		call Div32By16
 
+		;; check memory limits and store values for bank rolling
 		ld a, ixh
-		;; TODO if A != 0 then bail - way too big (or disable rolling)
+		and a
+
+		jp nz, notEnoughMemory
+
 		ld a, ixl
 		ld (Bank.pagesRequired), a
 		ld (Bank.lastPageSize), hl
 
+		push af
+		call Bank.availablePages
+		pop af
+
+		;; I'm reducing E because A (pages required) is rounded down
+		dec e
+		cp e
+
+		;; we already know we don't have enough memory
+		jp nc, notEnoughMemory
+
+.doneWithContentLengthChecks
 		pop de
 		jp .slurpToEndOfAllHeaders
 

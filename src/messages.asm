@@ -20,6 +20,7 @@ noFileOrBank	DC "I Filename or bank must be specified"
 fileOpen	DC "J Could not open file for writing"
 contentLength	DC "K Content length error"
 outOfMemory	DC "L Out of memory: try with '-r' to disable rolling banks"
+notEnoughMemory	DC "M Not enough memory: try with '-r' to disable rolling banks"
 	ENDMODULE
 
 	MODULE Msg

@@ -20,7 +20,7 @@ poolSize	EQU 224
 		ALIGN 256
 pool		BLOCK poolSize,0
 rolling		DW pool				; use bank rolling by default for file saving
-rollingActive	EQU $-1
+rollingActive	DB 1
 
 buffer		EQU $8000
 	IFDEF TESTING
@@ -56,7 +56,7 @@ init:
 		;; data in and out of banks, and set to 1 if we're working with
 		;; files
 		ld a, (State.fileMode)
-		and a
+		cp NOT_WRITING_TO_FILE
 		jr nz, .initNewBank
 
 		;; double the value as we'll get 16K bank
@@ -144,6 +144,13 @@ allocPage:
                 db      M_P3DOS         ; Call the function, new page # is in E
                 ret
 
+; E <- total pages available
+; Modifies: HL
+availablePages:
+		ld hl, $0004                		; ZX banks, available
+	        call  allocPage.callP3dos
+		ret
+
 freePage:
                 push    af
                 push    ix
@@ -166,6 +173,7 @@ freePage:
 ;
 ; Modifies: HL, BC, AF, DE, IX
 flushBanksToDisk:
+		CSP_BREAK
 		ld hl, pool
 		ld a, (pagesRequired)
 		ld d, a
@@ -190,6 +198,7 @@ flushBanksToDisk:
 .loop
 		ld a, (hl)
 		nextreg	pageA, a		; load page into $8000
+		ld (.SMC_pageNumber), a
 
 		push af
 		push bc
@@ -214,7 +223,8 @@ flushBanksToDisk:
 
 .dealloc
 		;; release the page - light version of freePage
-                ld e, a             		; E = page #
+.SMC_pageNumber EQU $+1
+                ld e, SMC             		; E = page #
                 ld hl, $0003        		; Deallocate function from normal memory
                 call allocPage.callP3dos
 
@@ -227,22 +237,43 @@ flushBanksToDisk:
 		djnz .loop
 		ret
 
+deallocateAllRollingBanks:
+		ld hl, pool			; array of allocated pages
+		ld b, $ff
+.loop
+		ld a, (hl)
+		and a
+		ret z				; if page is zero, we're done
+
+		push hl
+		push bc
+
+		ld e, a
+                ld hl, $0003        		; Deallocate function from normal memory
+                call allocPage.callP3dos
+
+		pop bc
+		pop hl
+		inc l				; point to next page in the array
+		djnz .loop
+		ret
 
 ; Allocates two 8K pages at a time then puts them in our MMU 4 & 5
 ;
 ; Modifies: HL, AF
 allocateRollingBank:
+		CSP_BREAK
 		ld hl, (rolling)			; HL = points to base of the pool
 
 		call allocPage
-		jr c, .outOfMemory
+		jr c, outOfMemory
 		ld (userBank), a
 		nextreg	pageA, a
 		ld (hl), a
 		inc l
 
 		call allocPage
-		jr c, .outOfMemory
+		jr c, outOfMemory
 		ld (userBank), a
 		nextreg	pageB, a ; set bank to A
 		ld (hl), a
@@ -251,7 +282,8 @@ allocateRollingBank:
 		ld (rolling), hl
 		ret
 
-.outOfMemory
+outOfMemory
+		call deallocateAllRollingBanks
 		ld hl, Err.outOfMemory
 		jp Error
 

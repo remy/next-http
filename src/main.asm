@@ -3,6 +3,7 @@
 	OPT reset --zxnext --syntax=abfw
 
 	; DEFINE TESTING
+	; DEFINE THROTTLE					; throttle storage writing
 
 	INCLUDE "version.inc.asm"
 	INCLUDE "macros.inc.asm"
@@ -16,7 +17,7 @@
 		CSPECTMAP "http.map"
 		DISPLAY "Adding jump to ",/H,testStart
 testStart:
-		ld hl, testFakeArgumentsLine
+		; ld hl, testFakeArgumentsLine
 		call start
 		ret
 testFakeArgumentsLine
@@ -36,7 +37,9 @@ testFakeArgumentsLine
 		; DZ "get -f demo.scr -h data.remysharp.com -u /5 -v 2" ; screen$
 		; DZ "get -f http-demo.tap -h zxdb.remysharp.com -u /get/18840 -v 2"
 		; DZ "get -f 4k.bin -h data.remysharp.com -u /10 -v 3"
-		DZ "get -h zxdb.remysharp.com -u /get/25485 -f targetr.tap -v 3"
+		; DZ "get -f tmp.bin -h data.remysharp.com -u /13 -7 -v 3 -r"
+		; DZ "get -f 3mb.bin -h data.remysharp.com -u /15 -r -v 3"
+		; DZ "get -h zxdb.remysharp.com -u /get/25485 -f targetr.tap -v 3"
 
 	ENDIF
 
@@ -176,6 +179,10 @@ borderError:
 		jp Error
 noFileOrBankError:
 		ld hl, Err.noFileOrBank
+		jp Error
+notEnoughMemory:
+		call Wifi.closeTCP
+		ld hl, Err.notEnoughMemory
 		jp Error
 fileOpenError:
 		ld hl, Err.fileOpen
@@ -328,16 +335,15 @@ LoadPackets
 		jr nz, .continue
 		jr c, .contentLenghtError
 
-		;; FIXME this is lazy coding
+		;; there's no more content to slurp, close connection
 		call Wifi.closeTCP
 		ld hl, Wifi.closed
 		ld (hl), 1
-
 .continue
 		;; now write to file if required
 		ld a, (State.fileMode)
-		cp WRITE_TO_FILE
-		jr nz, .skipFileWrite
+		cp NOT_WRITING_TO_FILE
+		jr z, .skipFileWrite
 
 		ld a, (Bank.rollingActive)
 		and a
@@ -347,6 +353,26 @@ LoadPackets
 		ld (Wifi.bufferPointer), hl		; reset the wifi buffer at the same time
 		ld bc, (Wifi.bufferLength)
 		call esxDOS.fWrite
+
+		;; this tests throttled writing to the sd card
+	IFDEF THROTTLE
+		push bc
+		ld c, $ff
+
+.throttleLoopOuter
+		ld b, $ff
+.throttleLoopInner
+	DUP 20
+		nop
+	EDUP
+		djnz .throttleLoopInner
+		dec c
+		ld a, c
+		and a
+		jr nz, .throttleLoopOuter
+
+		pop bc
+	ENDIF
 
 .skipFileWrite
 		ld a, (Wifi.closed)
@@ -360,13 +386,16 @@ LoadPackets
 		jp Error
 
 PreExitCheck
+		CSP_BREAK
 		ld a, (State.fileMode)
-		cp WRITE_TO_FILE
-		jr nz, .cleanExit
+		cp NOT_WRITING_TO_FILE
+		jr z, .cleanExit
 
 		;; Now work through banks and write to file
 		;; we can do it forward from the start of the stack
-		call Bank.flushBanksToDisk
+		ld a, (Bank.rollingActive)
+		and a
+		call nz, Bank.flushBanksToDisk
 .cleanExit
 		and a					; clear carry for exit
 		jr Exit
