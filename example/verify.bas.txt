@@ -12,7 +12,7 @@
 520 t$="8k":u$="/8":%r=6: GO SUB 1000
 530 t$="16k":u$="/9":%r=7: GO SUB 1000
 540 t$="32k":u$="/7":%r=8: GO SUB 1000
-550 t$="48k":u$="/11":%r=8: GO SUB 1000
+550 t$="48k":u$="/11":%r=9: GO SUB 1000
 900 ON ERROR
 910 PRINT FLASH 1;"All OK"
 920 PAUSE 0: STOP

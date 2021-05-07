@@ -19,13 +19,15 @@ Options:
 
 - `-b` bank number in 16K blocks
 - `-f` filename (only available in `get` and cannot be used with `-b`)
-- `-l` length of bytes to send
-- `-o` address offset (defaults to 0)
 - `-h` host address
 - `-p` port number (defaults to 80)
 - `-u` url (defaults to `/`)
+- `-l` length of bytes to POST
+- `-o` address offset (defaults to 0)
 - `-v` flash the border to n 0-7 (defaults to no flashing) and restores original border on exit
 - `-7` enabled base64 decoding (useful for supporting [Cspect](http://cspect.org/) and 7-bit binary exchange*)
+- `-r` disable rolling banks (see [rolling banks](#rolling-banks))
+- `-x` disable uart init - only use this if you know what you're doing!
 
 Note that by default a GET request will empty out the bank selected. If you want to preserve the data in the bank, use a negative value for the offset, i.e. `-b 5 -o -0` will load the http request into bank 5, preserving the RAM and inserting at memory position 0 (in fact, `$4000` in RAM).
 
@@ -50,6 +52,12 @@ Assuming `http` is in the same directory as your NextBASIC file, the following p
 ```
 
 Note that `http` will expect a BASIC variable to represent a single argument value and you cannot combine multiple arguments into a single variable (i.e. `h$="-h example -p 8080` won't work).
+
+## Rolling banks
+
+For file saving, rolling banks are used by default. What this means is that the http request is buffered into memory for as many memory banks are available (16K banks - two 8K pages). Before the file is fully downloaded a size check is run against the `content-length` and your available memory, and if there's not enough, `.http` will exit with error `M Not enough memory`.
+
+Rolling banks is used to provide as much support across different SD card speeds. If you need to download more than your memory limits _and_ you have a fast SD card (class 10 is a good default), then you can disable rolling banks using the `-r` switch as an argument.
 
 ## Installation
 

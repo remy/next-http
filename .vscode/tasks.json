@@ -11,11 +11,11 @@
       },
       "command": "sjasmplus",
       "args": [
-        "--sld=${workspaceFolder}/src/httpbank.sld",
+        "--sld=${workspaceFolder}/src/http.sld",
         "--nologo",
         "--fullpath",
         "${workspaceFolder}/src/main.asm",
-        "--sym=${workspaceFolder}/src/httpbank.labels"
+        "--sym=${workspaceFolder}/src/http.labels"
       ],
       "presentation": {
         "echo": true,

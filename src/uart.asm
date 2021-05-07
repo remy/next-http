@@ -17,6 +17,8 @@ UART_FIFO_FULL     EQU %00000100
 ;
 ; Modifies AF and BC
 init
+SMC_skip_baud_init
+		nop
 		ld hl, .baudTable
 		ld bc, $243B			;Now adjust for the set Video timing.
 		ld a, 17
@@ -49,11 +51,8 @@ init
 		ret
 
 .baudTable:
-	; IFDEF TESTING
-		; DEFW 486,496,512,521,538,556,573,469	; 56k - slower on the off chance it helps with debug
-	; ELSE
-		DEFW 49,50,51,52,54,56,57,47 ;576000 -10
-	; ENDIF
+		DEFW 243,248,256,260,269,278,286,234	; 115K
+
 
 ; A <- result
 ; Modifies: BC

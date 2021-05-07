@@ -100,7 +100,7 @@ init:
 
 .noBorder
 		ld a, $c9				; $C9 = ret
-		ld (SMC_disableBorder), a
+		ld (Border.SMC_disableBorder), a
 
 .setupBank
 		;; page in our bank

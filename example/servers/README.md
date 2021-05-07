@@ -1,8 +1,8 @@
 # Server examples
 
-I've tried to include a few languages of how you might write a server to respond to requests from `httpbank`.
+I've tried to include a few languages of how you might write a server to respond to requests from `http`.
 
-An important constraint with these servers that `httpbank` can connect to is that they must run over HTTP and _not_ HTTPS (which many hosting platforms provide and enforce for free).
+An important constraint with these servers that `http` can connect to is that they must run over HTTP and _not_ HTTPS (which many hosting platforms provide and enforce for free).
 
 To use the server, select the language you're familiar with or want to play with and start the server (details below).
 
@@ -13,7 +13,7 @@ The example assumes your server is running on IP address 192.168.0.1 and on the 
 ```
 10 LAYER 0
 20 BANK 20 CLEAR :; we'll use bank 20 for this example
-30 ../httpbank -b 20 -h 192.168.0.1 -p 8080
+30 ../http -b 20 -h 192.168.0.1 -p 8080
 40 s$ = BANK 20 PEEK$(0, ~128) :; the response is terminated with the $80 byte
 50 PRINT s$
 ```
@@ -21,7 +21,7 @@ The example assumes your server is running on IP address 192.168.0.1 and on the 
 If you're using Cspect, you will need to request the `http://192.168.0.1:8080/7` URL and use the `-7` flag as this encodes the bytes to 7-bit (a constraint on Cpsect) as the servers are sending byte values greater than `$3F`. This means line `30` will read:
 
 ```
-30 ../httpbank -b 20 -h 192.168.0.1 -p 8080 -u /7 -7
+30 ../http -b 20 -h 192.168.0.1 -p 8080 -u /7 -7
 ```
 
 If running from Next hardware, you do not need this.
@@ -47,4 +47,4 @@ The service can be found at http://data.remysharp.com
 
 ## Missing server languages
 
-If there's a language you think should be included, please send a [pull request](https://github.com/remy/next-httpbank/pulls) with a server that supports the same functionality as that demonstrated by the existing servers.
+If there's a language you think should be included, please send a [pull request](https://github.com/remy/next-http/pulls) with a server that supports the same functionality as that demonstrated by the existing servers.

@@ -5,6 +5,6 @@ LAYER 0
 CLS
 
 ; http://data.remysharp.com/1 responds with binary 6912 bytes encoded as 8-bit
-../httpbank get -b 5 -h data.remysharp.com -o -0 -u /5 : ; $0a
+../http get -b 5 -h data.remysharp.com -o -0 -u /5 : ; $0a
 
 PAUSE 0

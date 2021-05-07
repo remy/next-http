@@ -24,6 +24,10 @@ parseError:
 		scf					; Exit Fc=1
 		jp Exit.nop
 
+parseDisableBankRoll:
+		xor a
+		ld (Bank.rollingActive), a
+		jp startToken
 
 ; HL = start of arguments
 ; Modifies: A, HL
@@ -52,6 +56,7 @@ parseOption
 		;; flag based args
 		cp '7' : jr z, parse7bit
 		cp 'r' : jr z, parseDisableBankRoll
+		cp 'x' : jr z, parseDisableBaudInit
 
 		call checkForEnd
 		jr z, parseError
@@ -105,9 +110,9 @@ parse7bit:
 
 		jr startToken
 
-parseDisableBankRoll:
-		xor a
-		ld (Bank.rollingActive), a
+parseDisableBaudInit:
+		ld a, $c9				; $C9 = ret
+		ld (Uart.SMC_skip_baud_init), a
 		jp startToken
 continueOption:
 		ld (currentOption), de			; required for NextBASIC replacement

@@ -48,17 +48,17 @@
       "tmpDir": "${workspceFolder}",
       "sjasmplus": [
         {
-          "path": "${workspaceFolder}/src/httpbank.sld",
+          "path": "${workspaceFolder}/src/http.sld",
           "useFiles": true,
           "asm": "sjasmplus",
-          "mainFile": "httpbank.asm"
+          "mainFile": "http.asm"
         }
       ],
       "disassemblerArgs": {
         "esxdosRst": true
       },
       "commandsAfterLaunch": ["-assertion enable"],
-      "load": "${workspaceFolder}/httpbank.sna",
+      "load": "${workspaceFolder}/http.sna",
       "startAutomatically": false,
       "preLaunchTask": "sjasmplus"
     }

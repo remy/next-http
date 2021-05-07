@@ -3,7 +3,7 @@
 
 ;
 ; This is a kitchen sink demo of
-; what HTTPBANK can do when
+; what HTTP can do when
 ; connected to a real server
 ; for making GET and POST
 ; requests.
@@ -33,11 +33,11 @@ IF LEN n$=0 THEN n$="unknown"
 l$= STR$ LEN n$
 BANK 20 POKE 0,n$
 BANK 21 POKE 0,n$
-../httpbank post -b 20 -h h$ -u /1 -l l$
+../http post -b 20 -h h$ -u /1 -l l$
 
 ; GET 8bit
 CLS
-../httpbank get -b 20 -h h$ -u /1
+../http get -b 20 -h h$ -u /1
 r$= BANK 20 PEEK$ (0,83)
 
 PRINT r$
@@ -49,11 +49,11 @@ PAUSE 0
 CLS
 
 ; POST 7bit
-../httpbank post -b 21 -h h$ -u /4 -l l$ -7
+../http post -b 21 -h h$ -u /4 -l l$ -7
 
 ; GET 7bit - simple
 CLS
-../httpbank get -b 21 -h h$ -u /4 -7
+../http get -b 21 -h h$ -u /4 -7
 r$= BANK 21 PEEK$ (0,83)
 
 PRINT r$
@@ -64,7 +64,7 @@ PRINT "base64 encoding & auto decoding"
 PRINT '"Now multi-packet + flash border"
 PRINT '"Ready?"
 PAUSE 0
-../httpbank post -b 5 -h h$ -u /1 -l 6912 -f 2
+../http post -b 5 -h h$ -u /1 -l 6912 -f 2
 
 PRINT '"A packet is 2K, we just sent 6k!"
 PRINT '"Ready for the last web demo?"
@@ -75,6 +75,6 @@ CLS
 ; GET 7bit large
 ; http://data.remysharp.com/2 responds with binary 6912 bytes based encoded as 7-bit (so it's around 9217 bytes)
 ; bank=5 host=h$ url=/2 offset=-0 (meaning 0 and don't erase bank) enable-7bit flash 3 (magenta)
-../httpbank get -b 5 -h h$ -u /2 -o -0 -7 -f 3
+../http get -b 5 -h h$ -u /2 -o -0 -7 -f 3
 
 PAUSE 0
