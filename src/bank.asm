@@ -219,6 +219,7 @@ flushBanksToDisk:
 		ld bc, (Bank.lastPageSize)
 
 .write
+		call Border
 		call esxDOS.fWrite
 
 .dealloc

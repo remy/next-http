@@ -99,8 +99,8 @@ init:
 		jr .setupBank
 
 .noBorder
-		ld a, $c9
-		ld (Border), a
+		ld a, $c9				; $C9 = ret
+		ld (SMC_disableBorder), a
 
 .setupBank
 		;; page in our bank

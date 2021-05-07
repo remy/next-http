@@ -4,6 +4,7 @@
 Border:
 		;; we'll change this to `ret` if border is disabled
 		;; otherwise it remains as nop
+SMC_disableBorder:
 		nop
 		ex af, af'
 		jr nc, .addColour
