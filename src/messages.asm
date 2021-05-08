@@ -16,11 +16,11 @@ offsetError	DC "E Offset arg error"
 portError	DC "F Port error"
 borderError	DC "G Border out of range 0-7"
 hostError	DC "H Host required"
-noFileOrBank	DC "I Filename or bank must be specified"
-fileOpen	DC "J Could not open file for writing"
+noFileOrBank	DC "I Required: -f or -b"
+fileOpen	DC "J Can't open file for writing"
 contentLength	DC "K Content length error"
-outOfMemory	DC "L Out of memory: try with '-r' to disable rolling banks"
-notEnoughMemory	DC "M Not enough memory: try with '-r' to disable rolling banks"
+outOfMemory	DC "L Out of memory: try '-r'"
+notEnoughMemory	DC "M Not enough memory: try '-r'"
 	ENDMODULE
 
 	MODULE Msg
