@@ -232,7 +232,7 @@ Post
 
 		call Wifi.tcpSendBufferFrame
 
-		;; now send the bank broken down in to chunks of
+		;; now send the bank over UART broken down in to chunks of
 		;; 2048 for 8bit and 1536 for 7bit (to allow for encoding)
 		ld de, State.offset			; load and prepare the offset
 		call StringToNumber16			; HL = offset
@@ -386,7 +386,6 @@ LoadPackets
 		jp Error
 
 PreExitCheck
-		CSP_BREAK
 		ld a, (State.fileMode)
 		cp NOT_WRITING_TO_FILE
 		jr z, .cleanExit

@@ -209,16 +209,16 @@ tcpSendEncodedBufferFrame:
 
 	;; work out how much padding is required now we're at the end
 	ld a, (State.padding)
-	and a
+	and a					; if padding == 0 then don't add any null bytes
 	jr z, .padNone
 
-	cp 2
+	cp 2					; if padding == 2 null out Base64.input + 1 & + 2 (end)
 	jr nz, .padOne
 	xor a
-	ld (Base64.input+2), a
+	ld (Base64.input+1), a
 .padOne
 	xor a
-	ld (Base64.input+1), a
+	ld (Base64.input+2), a
 
 .padNone
 	scf					; set carry as a flag for encode process
@@ -242,7 +242,7 @@ tcpSendEncodedBufferFrame:
 
 	pop bc
 
-	dec bc					; adjust for the 4 bytes we just send
+	dec bc					; adjust for the 4 bytes we just sent
 	dec bc
 	dec bc
 	dec bc
