@@ -46,8 +46,24 @@ init:
 	IFDEF TESTING
 		NextRegRead debugPage
 		ld (prevDebugPage), a
-		call allocPage
-		nextreg	debugPage, a ; set bank to A
+		ld a, $28			; debug is stored in first page of bank 20
+		nextreg	debugPage, a
+
+		push bc
+		push de
+		push hl
+
+		;; erase 8K of the data in bank 20
+		ld bc, $2000
+		ld hl, debug
+		ld de, debug + 1
+		ld (hl), 0
+		ldir
+
+		pop hl
+		pop de
+		pop bc
+
 	ENDIF
 
 		pop bc
@@ -173,7 +189,6 @@ freePage:
 ;
 ; Modifies: HL, BC, AF, DE, IX
 flushBanksToDisk:
-		CSP_BREAK
 		ld hl, pool
 		ld a, (pagesRequired)
 		ld d, a
@@ -263,7 +278,6 @@ deallocateAllRollingBanks:
 ;
 ; Modifies: HL, AF
 allocateRollingBank:
-		CSP_BREAK
 		ld hl, (rolling)			; HL = points to base of the pool
 
 		call allocPage

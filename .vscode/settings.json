@@ -1,5 +1,4 @@
 {
-  "cSpell.words": [
-    "httpbank"
-  ]
+  "editor.rulers": [56, 52],
+  "cSpell.words": ["httpbank"]
 }

@@ -1,4 +1,4 @@
-;	DEFINE TEST_BASE64
+	; DEFINE TEST_BASE64
 	IFDEF TEST_BASE64
 		OPT reset --zxnext --syntax=abfw
 		INCLUDE "constants.inc.asm"
@@ -7,20 +7,41 @@
 
 		ORG $8000
 		INCLUDE "utils.asm"
+		INCLUDE "state.asm"
 start:
 		di
-		ld hl, $0007
-		call HLtoNumber
-		jr $
+		ld hl, 32
 		call Base64.EncodedLength
-		jr $
-		ld bc, $aa
-		ld de, $dd
-		ld hl, i3
+		; jr $
+
+		ld b, 11
+		ld hl, i0
+		ld a, 1
+		ld (State.padding), a
+		ld de, result
+.loop
+		push hl
+		push de
 		call Base64.Encode			; result in DE
+		pop de
+		; pop hl
+		; inc hl : inc hl : inc hl
+
+		ld hl, Base64.buffer
+	DUP 4
+		ld a, (hl)
+		ld (de), a
+		inc de : inc hl
+	EDUP
+
+		pop hl
+	DUP 3
+		inc hl
+	EDUP
+		djnz .loop
 		jr $
 
-
+		ALIGN 256
 result:
 		DS 256
 	ENDIF
@@ -365,6 +386,9 @@ buffer
 	ENDMODULE
 
 	IFDEF TEST_BASE64
+i0
+		DEFB $16, $1f, $19, $00, $42, $42, $3b, $12, $1c, $30, $4f, $58, $57, $56, $55, $60
+ 		DEFB $60, $5f, $5e, $5d, $5f, $5d, $5d, $47, $51, $5b, $51, $51, $5b, $52, $45, $4d, 0
 i1:		DEFB "123",0 ; MTIz
 i2:		DEFB "I",0 ; SQ==
 i3:		DEFB "Am",0 ; QW0=

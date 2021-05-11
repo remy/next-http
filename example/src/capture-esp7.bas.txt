@@ -1,9 +1,9 @@
-#program ../capture-esp
+#program ../capture-esp7
 1 RUN AT 3
 10 LAYER 0
 20 BANK 20 ERASE
-40 CLS : PRINT INVERSE 1;"HTTP 4k debug"; INVERSE 0
-145 t$="4k":u$="/10":%r=1: GO SUB 1010
+40 CLS : PRINT INVERSE 1;"HTTP 4k debug 7bit"; INVERSE 0
+145 t$="4k":u$="/12":%r=1: GO SUB 1010
 900 ON ERROR
 910 PRINT FLASH 1;"All OK"
 920 STOP
@@ -11,17 +11,17 @@
 1020 t$=t$+".bin"
 1030 IF %e=1 THEN GO TO 8000: ; banking
 1040 ON ERROR GO TO 1300
-1200 ../http-debug.dot -h data.remysharp.com -u u$ -f t$ -v 6
+1200 ../http-debug.dot -h data.remysharp.com -u u$ -f t$ -v 6 -7
 1210 GO TO 5090
 1300 ON ERROR
 1310 PRINT AT %r,11; INVERSE 1;"fail"; INVERSE 0;". Verifying: "
 1320 GO TO 5110
 5090 PRINT AT %r,11;"done. Verifying: "
-5110 SAVE "4k-esp-bank.bin" BANK 20,%$2000,%$2000
+5110 SAVE "4k-esp7-bank.bin" BANK 20,%$0000,%$2000
 5115 c$=t$+" -1 -mb 20"
 5120 .$ extract c$
 5130 %i=% BANK 20 PEEK 0
-8000 IF %i=$FF THEN PRINT AT %r,27; INVERSE 1;"OK"; INVERSE 0: ELSE PRINT AT %r,27; FLASH 1;"BAD": PAUSE 0: STOP
+8000 IF %i=$FF THEN PRINT AT %r,27; INVERSE 1;"OK"; INVERSE 0: ELSE PRINT AT %r,27; FLASH 1;"BAD": STOP
 8010 RETURN
 9000 ON ERROR
-9050 PRINT FLASH 1;"ERROR": ERROR : PRINT "4k-esp-bank.bin with debug has been created.": PAUSE 0: STOP
+9050 PRINT FLASH 1;"ERROR": ERROR : PRINT "4k-esp7-bank.bin with debug has been created.": PAUSE 0: STOP
