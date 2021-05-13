@@ -108,6 +108,7 @@ I've written a number of [example servers](https://github.com/remy/next-http/tre
 - `J` Could not open file for writing
 - `K` Could not read the http content length header correctly
 - `L` Out of memory to buffer file download: try with `-r` to disable rolling banks
+- `M` Not enough memory to download: try with `-r` to disable rolling banks
 
 ## Testing
 
