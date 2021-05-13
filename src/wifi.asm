@@ -377,7 +377,8 @@ getPacket:
 	push hl
 
 	ld a, (firstRead)
-	and a : jr z, .headerProcessed
+	and a
+	jr z, .headerProcessed
 
 .processHeader
 	;; we're searching for "content-length:"
@@ -437,6 +438,7 @@ getPacket:
 
 	push bc
 
+	; CSP_BREAK
 	call Base64.Decode			; modifies BC and AF only
 						; result is stored in Base64.output
 

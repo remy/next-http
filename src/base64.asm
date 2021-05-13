@@ -10,6 +10,32 @@
 		INCLUDE "state.asm"
 start:
 		di
+
+		;; decode test
+		ld hl, s12
+		ld a, 96
+		;; now a / 4
+		rra
+		rra
+
+		ld b, a
+.loopDecode
+		ld de, Base64.buffer
+		push bc
+	DUP 4
+		ld a, (hl)
+		ld (de), a
+		inc hl
+		inc de
+	EDUP
+		push hl
+		call Base64.Decode
+		pop hl
+		pop bc
+		djnz .loopDecode
+		jr $
+
+		;; encode
 		ld hl, 32
 		call Base64.EncodedLength
 		; jr $
@@ -24,8 +50,6 @@ start:
 		push de
 		call Base64.Encode			; result in DE
 		pop de
-		; pop hl
-		; inc hl : inc hl : inc hl
 
 		ld hl, Base64.buffer
 	DUP 4
@@ -310,10 +334,12 @@ ToIndex
 		ld a, 63
 		ret
 
-; Modifies: AF, BC
 ; Expects Base64.buffer to contain only 4 bytes
+;
+; Modifies: AF, BC
 Decode:
-	; Convert the 4 bytes in .buffer from 7-bit encoded to 8-bit decoded bytes,
+
+; Convert the 4 bytes in .buffer from 7-bit encoded to 8-bit decoded bytes,
 ; and store in .output. Once done, .output is 3 bytes long, copy it over
 ; the original input buffer.
 .capture
@@ -409,5 +435,8 @@ s10:		DEFB "AAAA",0
 
 s11:		DEFB "AAECAwQFBgcICQoLDA0ODxAREhMUFQ==",0
 
+s12:		DEFB "UkVNmZl4DVJFTVdGeAhKVUwiIUYIUkVNV0bUB0FCSVdGoAdSRQBw/ogHU1RTshNYB0RBRJmZVgdSRU2ZmRQHRVRTIiG4BA==",0
+
+end:
 		SAVESNA "base64.sna", start
 	ENDIF

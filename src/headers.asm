@@ -83,8 +83,9 @@ contentLengthSub:
 ;
 ; DE=length of UART buffer
 ; Fc=failed to find header
-; Modifies: AF, BC, DE, HL, IX
+; Modifies: AF, BC, DE, HL
 findContentLength
+		push ix
 		ld hl, tmpBuffer
 
 		;; process a single header
@@ -226,7 +227,7 @@ findContentLength
 		call Uart.read
 		dec de
 		scf
-		ret
+		jr .exit
 
 .slurpToEndOfHeader
 		call Uart.read : dec de : cp CR : jr nz, .slurpToEndOfHeader
@@ -238,6 +239,8 @@ findContentLength
 		call Uart.read : dec de ; LR
 		call Uart.read : dec de : cp CR : jr nz, .slurpToEndOfAllHeaders
 		call Uart.read : dec de ; LR
+.exit
+		pop ix
 		ret
 Parse
 

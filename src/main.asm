@@ -30,6 +30,7 @@ testFakeArgumentsLine
 		; DZ "get -b 5 -h data.remysharp.com -u /2 -7 -o -0 -f 3" ; screen$
 		; DZ "get -b 5 -o -0 -h data.remysharp.com -u /5 -v 2" ; screen$
 		; DZ "get -b 20 -h data.remysharp.com -u /8 -v 2" ; 8K
+		DZ "get -h data.remysharp.com -u /6 -b 20 -7 -v 2" ; marbles demo
 
 		;; file based tests
 		; DZ "get -f 8k.bin -h data.remysharp.com -u /8 -v 2" ; 8K
@@ -471,7 +472,7 @@ diagBinPcLo 	EQU ((100*diagBinSz)%8192)*10/8192
 			;; delete any autoexec.bas
 			SHELLEXEC "(hdfmonkey rm /Applications/cspect/app/cspect-next-2gb.img /nextzxos/autoexec.bas > /dev/null) || exit 0"
 			SHELLEXEC "hdfmonkey put /Applications/cspect/app/cspect-next-2gb.img http-debug.dot /devel/http-debug.dot"
-			SHELLEXEC "mono /Applications/cspect/app/cspect.exe -r -w5 -basickeys -zxnext -nextrom -exit -brk -tv -mmc=/Applications/cspect/app/cspect-next-2gb.img -map=./http.map -sd2=/Applications/cspect/app/empty-32mb.img -com='/dev/tty.wchusbserial1430:11520'"
+			SHELLEXEC "mono /Applications/cspect/app/cspect.exe -r -w5 -basickeys -zxnext -nextrom -exit -brk -tv -mmc=/Applications/cspect/app/cspect-next-2gb.img -map=./http.map -sd2=/Applications/cspect/app/empty-32mb.img" ;  -com='/dev/tty.wchusbserial1430:11520'
 		ENDIF : ENDIF
 		DISPLAY "TEST BUILD"
 	ENDIF
