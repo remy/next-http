@@ -156,8 +156,9 @@ Then include the `http-debug.bin` that was saved on  your Next to help debug the
 - Uses [sjasmplus](https://z00m128.github.io/sjasmplus/documentation.html) from VS Code task
 - Follows this [code convention](https://github.com/remy/z80-code-conventions)
 - Entry point is main.asm
+- Optional `Makefile` has been included
 
-## License
+## License for .HTTP
 
 It's in the license link, but all the same:
 
