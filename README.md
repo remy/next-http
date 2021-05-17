@@ -1,4 +1,4 @@
-# http - for the Spectrum Next (public beta)
+# http - for the Spectrum Next
 
 A utility for application developers to talk to web servers to exchange blocks of data, such as high scores, game progress. The `.http` dot command can also download and save to files over the web.
 
