@@ -36,7 +36,7 @@ Value2 	EQU $+1
 		jr z, Failure			; If we hit here, 32 bit value is $00000000
 		dec hl
 		ld (Value2), hl
-		ld hl, ESPTimeout mod 65536
+		ld hl, $FFFF            ; Reset lower word when upper word rolls down, so always reset to $FFFF
 		ld (Value), hl
 		jr Success
 	ENDMODULE
