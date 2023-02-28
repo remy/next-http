@@ -91,7 +91,7 @@ init:
 		ret
 
 erase:
-		ld bc, $4000				; 16k
+		ld bc, $3fff				; 16k
 		ld hl, buffer
 		ld de, buffer + 1
 		ld (hl), 0
