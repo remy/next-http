@@ -18,6 +18,7 @@ Value 	EQU $+1
 		ld hl, SMC
 		dec hl
 		ld (Value), hl
+		call WaitRaster
 		ld a, h
 		or l
 		jr z, Rollover
@@ -35,8 +36,26 @@ Value2 	EQU $+1
 		or l
 		jr z, Failure			; If we hit here, 32 bit value is $00000000
 		dec hl
+		call WaitRaster
 		ld (Value2), hl
-		ld hl, $FFFF            ; Reset lower word when upper word rolls down, so always reset to $FFFF
+		ld hl, ESPTimeout mod 65536
 		ld (Value), hl
 		jr Success
+
+// https://github.com/remy/next-http/issues/7
+WaitRaster:
+		push bc
+		push af
+.waitloop:
+		ld bc, $243b
+		ld a, $1f     			; only really care about lsb
+		out (c), a
+		inc b
+		in a, (c)
+		cp 192
+		jr nz, .waitloop
+		pop af
+		pop bc
+		ret
+
 	ENDMODULE
