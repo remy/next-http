@@ -149,7 +149,7 @@ Then include the `http-debug.bin` that was saved on  your Next to help debug the
 - [Alexander Sharikhin](https://github.com/nihirash) - via internet-nextplorer (which uart.asm and much of wifi.asm is based)
 - [Robin Verhagen-Guest](https://github.com/Threetwosevensixseven/NXtel) - via nxtp and nxtel source code
 - [Peter Ped Helcmanovsky](https://github.com/ped7g/) - via dot commands and answering endless questions on discord
-- [David Saphier](https://github.com/em00k/) - for starting and inspiring full "save to file" support
+- [David Saphier](https://github.com/em00k/) - for starting, inspiring full "save to file" support and code contributions
 
 ## Development
 
