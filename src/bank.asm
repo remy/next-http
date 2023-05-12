@@ -1,7 +1,7 @@
 	MODULE Bank
 
-prevPageA	DEFB 0
-prevPageB	DEFB 0
+prevPageA	DEFB 4
+prevPageB	DEFB 5
 userBank	DEFB 0,0
 pagesRequired	DEFB 0
 lastPageSize	DEFW 0
