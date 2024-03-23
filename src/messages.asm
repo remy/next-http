@@ -21,6 +21,7 @@ fileOpen	DC "J Can't open file for writing"
 contentLength	DC "K Content length error"
 outOfMemory	DC "L Out of memory: try '-r'"
 notEnoughMemory	DC "M Not enough memory: try '-r'"
+contentLengthMissing	DC "N content-length missing"
 	ENDMODULE
 
 	MODULE Msg

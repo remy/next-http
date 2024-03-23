@@ -57,7 +57,7 @@ tmpBuffer:
 ; Modifies: AF, HL, DE
 contentLengthSub:
 		or a					; reset carry for sbc
-		ld hl, (contentLength)		; do the LSW first
+		ld hl, (contentLength)			; do the LSW first
 		sbc hl, de
 		ld (contentLength), hl
 		ret nc
@@ -92,6 +92,10 @@ findContentLength
 .processHeader
 		call Uart.read				; load A with the next character
 		dec de
+
+		;; if there's an immediate CR, then we're on a blank, and we need to bail
+		cp CR
+		jp z, .contentLengthNotFound
 
 		;; convert character to uppercase
 		cp 'a'					; if A < 'a' then skip case shift
@@ -234,11 +238,17 @@ findContentLength
 		call Uart.read : dec de ; LR
 		jp .processHeader
 
+.contentLengthNotFound
+		; set carry to indicate failure
+		scf
+		jr .exit
+
 .slurpToEndOfAllHeaders
 		call Uart.read : dec de : cp CR : jr nz, .slurpToEndOfAllHeaders
 		call Uart.read : dec de ; LR
 		call Uart.read : dec de : cp CR : jr nz, .slurpToEndOfAllHeaders
 		call Uart.read : dec de ; LR
+		and a					; clear carry
 .exit
 		pop ix
 		ret

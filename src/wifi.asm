@@ -28,7 +28,7 @@ init:
 	EspCmdOkErr "AT+CIPMUX=0" ; Single connection mode
 	jr c, .initError
 
-	and a
+	and a						; reset the carry flag
 	ret
 .initError
 	call RetartESP
@@ -49,7 +49,7 @@ RetartESP:
 	EspCmd "AT+RST"
 	jr .checkWifiConnect
 .alreadyTried
-	scf
+	scf						; set the carry: fail
 	ret
 .checkWifiConnect:
 	call Uart.read
@@ -60,10 +60,9 @@ RetartESP:
 	call Uart.read : cp ' '  : jr nz, .checkWifiConnect
 	call Uart.read : cp 'G'  : jr nz, .checkWifiConnect  ; searching for "WIFI CONNECTED"
 	call flushToLF
-	and a
+
+	and a						; clear the carry
 	ret
-
-
 closeTCP
 	EspCmdOkErr "AT+CIPCLOSE"
 	ret
@@ -102,7 +101,8 @@ checkOkErr:
 	call Uart.read : cp 'K' : jr nz, checkOkErr
 	call Uart.read : cp 13  : jr nz, checkOkErr
 	call flushToLF
-	and a
+
+	and a						; clear the carry
 	ret
 .errStart
 	call Uart.read : cp 'R' : jr nz, checkOkErr
@@ -124,6 +124,8 @@ checkOkErr:
 flushToLF
 	call Uart.read
 	cp 10 : jr nz, flushToLF
+
+	and a						; clear the carry
 	ret
 
 ; HL = buff
@@ -350,6 +352,7 @@ getPacket:
 	call Uart.read : cp 13 : jr nz, getPacket
 	ld a, 1
 	ld (closed), a
+	and a						; clear the cary
 	ret
 .cspectHack
 	;; I don't know why, but cspect gives us OK\n\r after the http request
@@ -357,6 +360,7 @@ getPacket:
 	call Uart.read : cp 10 : jr nz, getPacket
 	ld a, 1
 	ld (closed), a
+	and a						; clear the cary
 	ret
 .ipdBegun
 	call Uart.read : cp 'I' : jr nz, getPacket
@@ -384,20 +388,30 @@ getPacket:
 	;; we're searching for "content-length:"
 	call Headers.findContentLength
 
+	;; if there's a carry flag, then it failed and we bail
+	;; out leaving the carry in place
+	jr nc, .processHeaderNoError
+	pop hl
+	ret
+
+.processHeaderNoError
 	ld a, 0
 	ld (firstRead), a
 .headerProcessed
 	pop hl
 
-	ld b, d					; load DE (back) into BC
+	ld b, d						; load DE (back) into BC
 	ld c, e
-	ld (bufferLength), bc			; save the length for saving to file
+	ld (bufferLength), bc				; save the length for saving to file
 
 	;; check if the header was all we got in the IPD request
 	ld a, b
 	or c
 	jr nz, .headerProcessedContinue
 	ld (bufferPointer), hl
+
+	;; then we need to clear the carry flag, as there's no error
+	and a
 	ret
 
 .headerProcessedContinue
@@ -476,6 +490,7 @@ getPacket:
 	or c
 	jr nz, .readp
 	ld (bufferPointer), hl
+	and a						; clear the cary
 	ret
 
 .outOfMemory
@@ -498,6 +513,7 @@ getPacket:
 	ld a, b
 	or c
 	jr nz, .skipSavingBuffer
+	and a						; clear the cary
 	ret
 
 .slurp

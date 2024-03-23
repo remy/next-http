@@ -328,6 +328,7 @@ Get
 		call Wifi.tcpSendString
 LoadPackets
 		call Wifi.getPacket
+		jr c, .contentLenghtMissing
 
 		;; reduce the content length left to read
 		ld de, (Wifi.bufferLength)
@@ -382,9 +383,14 @@ LoadPackets
 
 		jr LoadPackets
 
+.contentLenghtMissing:
+		ld hl, Err.contentLengthMissing
+		jp Error
+
 .contentLenghtError:
 		ld hl, Err.contentLength
 		jp Error
+
 
 PreExitCheck
 		ld a, (State.fileMode)
@@ -472,7 +478,7 @@ diagBinPcLo 	EQU ((100*diagBinSz)%8192)*10/8192
 			;; delete any autoexec.bas
 			SHELLEXEC "(hdfmonkey rm /Applications/cspect/app/cspect-next-2gb.img /nextzxos/autoexec.bas > /dev/null) || exit 0"
 			SHELLEXEC "hdfmonkey put /Applications/cspect/app/cspect-next-2gb.img http-debug.dot /devel/http-debug.dot"
-			SHELLEXEC "mono /Applications/cspect/app/cspect.exe -r -w5 -basickeys -zxnext -nextrom -exit -brk -tv -mmc=/Applications/cspect/app/cspect-next-2gb.img -map=./http.map -sd2=/Applications/cspect/app/empty-32mb.img" ;  -com='/dev/tty.wchusbserial1430:11520'
+			SHELLEXEC "mono /Applications/cspect/app/cspect.exe -r -w5 -basickeys -zxnext -nextrom -exit -brk -mmc=/Applications/cspect/app/cspect-next-2gb.img -map=./http.map"
 		ENDIF : ENDIF
 		DISPLAY "TEST BUILD"
 	ENDIF

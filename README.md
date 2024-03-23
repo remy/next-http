@@ -9,10 +9,10 @@ A utility for application developers to talk to web servers to exchange blocks o
 .http post -b 22 -l 1024 -h 192.168.1.100 -p 8080 -u /send
 
 ; Download and save Manic Miner http://zxdb.remysharp.com/get/18840
-.http -h zxdb.remysharp.com -u /18840 -f manic.tap
+.http -h zxdb.remysharp.com -u /get/18840 -f manic.tap
 
-; Load http://data.remysharp.com/1 directly into bank 26 and flash border red (2)
-.http get -b 26 -h data.remysharp.com -u /1 -v 2
+; Load http://data.remysharp.com/18 (the text "hello world") into bank 20 and flash border red (2)
+.http get -b 20 -h data.remysharp.com -u /18 -v 2
 ```
 
 Options:
@@ -109,6 +109,7 @@ I've written a number of [example servers](https://github.com/remy/next-http/tre
 - `K` Could not read the http content length header correctly
 - `L` Out of memory to buffer file download: try with `-r` to disable rolling banks
 - `M` Not enough memory to download: try with `-r` to disable rolling banks
+- `N` content-length missing: .http requires the `content-length` header from the server to work properly
 
 ## Testing
 
